@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="author" content="John Khan" />
+  <meta name="description" content="Lease Exit Timer counts ordinary Ontario tenant notice dates and drafts a copy-paste note. It is not legal advice." />
+  <title>Lease Exit Timer · Ontario notice dates</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip" href="#main">Skip to main content</a>
+  <header class="banner">
+    <div class="banner-inner">
+      <h1>Lease Exit Timer</h1>
+      <p>Enter the day you can give notice and the kind of tenancy you have. The page counts the earliest ordinary end date under Ontario’s public notice rules and drafts a short note you can paste while you fill official Form N9.</p>
+      <span class="pill">Built for Silicon Valley Buildathon</span>
+    </div>
+  </header>
+  <main id="main" class="wrap">
+    <div class="grid two">
+      <section class="card" aria-labelledby="in-title">
+        <h2 id="in-title">Your dates</h2>
+        <div class="row two">
+          <div>
+            <label for="notice">Date you can give notice</label>
+            <input id="notice" type="date" required />
+          </div>
+          <div>
+            <label for="kind">Kind of tenancy</label>
+            <select id="kind">
+              <option value="monthly">Monthly</option>
+              <option value="fixed">Fixed term (for example one year)</option>
+              <option value="weekly">Weekly</option>
+              <option value="daily">Daily</option>
+            </select>
+          </div>
+        </div>
+        <div class="row two" id="monthly-row">
+          <div>
+            <label for="due">Day of the month rent is due</label>
+            <input id="due" type="number" min="1" max="31" step="1" value="1" />
+            <p class="hint">If rent is due on the 1st, the rental period usually ends on the last day of the month.</p>
+          </div>
+        </div>
+        <div class="row two" id="fixed-row" hidden>
+          <div>
+            <label for="expiry">Last day of the fixed term</label>
+            <input id="expiry" type="date" />
+          </div>
+        </div>
+        <div class="row two" id="weekly-row" hidden>
+          <div>
+            <label for="payday">Weekday rent is paid</label>
+            <select id="payday">
+              <option value="1">Monday</option>
+              <option value="2">Tuesday</option>
+              <option value="3">Wednesday</option>
+              <option value="4">Thursday</option>
+              <option value="5">Friday</option>
+              <option value="6">Saturday</option>
+              <option value="0">Sunday</option>
+            </select>
+            <p class="hint">The official N9 example says that if you pay each Monday, the termination date must be a Sunday.</p>
+          </div>
+        </div>
+        <div class="row two">
+          <div>
+            <label for="landlord">Landlord name (for the draft note)</label>
+            <input id="landlord" type="text" autocomplete="name" placeholder="Name on your agreement" />
+          </div>
+          <div>
+            <label for="tenant">Your name</label>
+            <input id="tenant" type="text" autocomplete="name" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="unit">Rental unit address</label>
+            <input id="unit" type="text" autocomplete="street-address" />
+          </div>
+        </div>
+        <button id="run" type="button">Count the date</button>
+      </section>
+      <section class="card" aria-labelledby="out-title">
+        <h2 id="out-title">Result</h2>
+        <div id="result" class="result" aria-live="polite">Enter a notice date and press Count the date.</div>
+        <h3>Draft note</h3>
+        <p class="hint">This is a plain-language note, not Form N9. Copy the official PDF, fill it, and give it to your landlord.</p>
+        <pre id="draft" class="draft"></pre>
+        <button id="copy-draft" type="button" class="secondary">Copy the draft</button>
+        <p id="copy-status" class="hint" aria-live="polite"></p>
+      </section>
+    </div>
+    <section class="card" style="margin-top:1rem;" aria-labelledby="rule-title">
+      <h2 id="rule-title">Rules this page uses</h2>
+      <div id="rules-copy"></div>
+      <div class="note">
+        <p>This page does not give legal advice. Other official paths can change the date, including a written agreement to end early, a refused assignment, an N12 or N13 from the landlord, care-home rules, or the Board’s process for tenants who have experienced sexual or domestic violence. Those paths are listed, not dated, because they need facts this form does not collect.</p>
+      </div>
+    </section>
+    <section class="sources">
+      <h2>Sources</h2>
+      <ul class="clean" id="source-list"></ul>
+    </section>
+  </main>
+  <footer class="wrap">
+    <p>Solo project by John Khan, Toronto, Ontario. Use official Form N9 from Tribunals Ontario.</p>
+  </footer>
+  <script src="dates.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+{
+  "retrieved": "2026-11-09",
+  "retrieved_zone": "America/Toronto",
+  "jurisdiction": "Ontario, Canada",
+  "disclaimer": "This page helps you count ordinary notice dates under the Residential Tenancies Act, 2006. It is not legal advice and it does not file a notice for you. Use the official Form N9 from Tribunals Ontario, and read the instructions on that form.",
+  "sources": [
+    {
+      "name": "Residential Tenancies Act, 2006, S.O. 2006, c. 17, sections 43, 44, and 47",
+      "url": "https://www.ontario.ca/laws/statute/06r17",
+      "note": "e-Laws official statute page. The period-of-notice rules used here are also printed on the official N9 instructions, which were retrieved as a PDF."
+    },
+    {
+      "name": "Landlord and Tenant Board, Form N9: Tenant's Notice to End the Tenancy (v. 01/04/2022), important information pages",
+      "url": "https://tribunalsontario.ca/documents/ltb/Notices%20of%20Termination%20%26%20Instructions/N9.pdf",
+      "note": "PDF returned HTTP 200 on 2026-11-09, America/Toronto."
+    },
+    {
+      "name": "Ministry of Municipal Affairs and Housing, A guide to the standard lease for rental housing, part D",
+      "url": "https://files.ontario.ca/mmah-guide-to-standard-lease-for-rental-housing-en-2022-04-19.pdf",
+      "note": "Official guide PDF returned HTTP 200 on 2026-11-09, America/Toronto."
+    }
+  ],
+  "ordinary_rules": [
+    {
+      "id": "monthly",
+      "label": "Monthly tenancy",
+      "min_days": 60,
+      "must_be_period_end": true,
+      "fixed_term_only_on_expiry": false,
+      "summary": "Give at least 60 days' notice. The termination date must be the last day of a rental period. If you pay on the first day of each month, that is usually the last day of the month."
+    },
+    {
+      "id": "weekly",
+      "label": "Weekly tenancy",
+      "min_days": 28,
+      "must_be_period_end": true,
+      "fixed_term_only_on_expiry": false,
+      "summary": "Give at least 28 days' notice. The termination date must be the last day of a rental period. If you pay each Monday, the instructions say the termination date must be a Sunday."
+    },
+    {
+      "id": "daily",
+      "label": "Daily tenancy",
+      "min_days": 28,
+      "must_be_period_end": true,
+      "fixed_term_only_on_expiry": false,
+      "summary": "Give at least 28 days' notice. The termination date must be the last day of a rental period."
+    },
+    {
+      "id": "fixed",
+      "label": "Fixed-term tenancy (for example a one-year lease)",
+      "min_days": 60,
+      "must_be_period_end": false,
+      "fixed_term_only_on_expiry": true,
+      "summary": "Give at least 60 days' notice, to be effective on the expiration date in the agreement. The termination date cannot be earlier than the last date of the fixed term, unless a listed exception on the official form applies."
+    }
+  ],
+  "february_march_rule": {
+    "id": "rta-44-5",
+    "applies_to": ["monthly", "fixed", "yearly"],
+    "summary": "When the tenant would normally have to give 60 days' notice, a notice for the last day of February may be given no later than January 1 of that year, and a notice for the last day of March may be given no later than February 1 of that year. The official N9 instructions describe this as a special rule that allows less than 60 days' notice in those two cases.",
+    "february": {"termination": "last-day-of-february", "latest_notice": "January 1 of that year"},
+    "march": {"termination": "last-day-of-march", "latest_notice": "February 1 of that year"}
+  },
+  "exceptions_not_calculated": [
+    "Daily or weekly tenancies use 28 days, which the calculator does handle when you pick that type.",
+    "If the landlord was required to use the standard form of lease, did not, and you made a written demand, the N9 instructions describe a limited way to end a fixed term earlier. This tool does not try to date that path.",
+    "If the landlord has given you an N12 or N13 notice, the N9 instructions allow a termination date 10 days or more after you give N9, and it does not have to be the last day of a period. This tool does not date that path.",
+    "If the landlord refused a request to assign the unit, the instructions set a 30-day or 28-day path that does not have to land on a period end. This tool does not date that path.",
+    "Care-home rules and the 28-day path for tenants who have experienced sexual or domestic violence use different Board forms and are not calculated here. See Tribunals Ontario for those forms."
+  ],
+  "n9_fields_for_draft": ["Landlord name", "All tenant names", "Rental unit address", "Termination date", "Signature and date on the official form"]
+}
