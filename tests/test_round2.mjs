@@ -41,7 +41,7 @@ eq("saturday is a holiday under rule 1.1", L.isCourierHoliday(L.parseISO("2026-1
 // Courier regressions. The weekend only engine said these counted on a holiday.
 const xmas = L.compute({ noticeDate: "2026-12-24", kind: "monthly", dueDay: 1, delivery: "courier" });
 eq("courier dec 24 2026 skips christmas, boxing day and sunday", xmas.notice, "2026-12-28");
-eq("courier dec 24 2026 lists the skipped days", xmas.courierSkipped.map((h) => h.name).join(","), "Christmas Day,Boxing Day,Sunday");
+eq("courier dec 24 2026 lists the skipped days", xmas.courierSkipped.map((h) => h.name).join(","), "Christmas Day,Saturday (Boxing Day),Sunday"); // round 4: a Saturday on the s. 88 list is shown as a weekend day
 const ny = L.compute({ noticeDate: "2026-12-31", kind: "monthly", dueDay: 1, delivery: "courier" });
 eq("courier dec 31 2026 counts on jan 4 2027", ny.notice, "2027-01-04");
 eq("so february 28 is no longer reachable", ny.termination, "2027-03-31");

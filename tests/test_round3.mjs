@@ -78,7 +78,7 @@ eq("chain defines Rules from s. 2 (1)", chain.links.some((l) => l.from === "RTA 
 eq("chain states its reading", chain.assumptions.length, 3);
 eq("courier source names 191 (1) (g) and 3.1", rules.delivery_rules.find((d) => d.id === "courier").source.includes("191 (1) (g)") && rules.delivery_rules.find((d) => d.id === "courier").source.includes("3.1"), true);
 eq("email source names rule 3.6", rules.delivery_rules.find((d) => d.id === "email").source.includes("3.6"), true);
-eq("holiday kinds listed", Object.keys(rules.holiday_kinds), ["statutory", "weekend", "assumed", "unknown"]);
+eq("holiday kinds listed", Object.keys(rules.holiday_kinds), ["weekend", "statutory", "assumed", "effect", "unknown"]);
 eq("page renders the chain", app.includes("service_chain") && page.includes('id="chain-copy"'), true);
 
 // Form N9 wording.

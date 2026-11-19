@@ -1,9 +1,11 @@
-// Brute force check with an independent oracle. The oracle below does its own date arithmetic with the
-// built-in Date object and its own hard-coded table of 2026 to 2029 holidays, typed in from the Legislation
-// Act, 2006, s. 88 (2) to (5). It does not call the engine's date helpers or holiday code. For every start
-// day from 1 January 2026 to 31 December 2029, every delivery method, and every kind of tenancy the page
-// offers (monthly with seven rent days, weekly with seven pay days, daily, and fixed terms ending one to four
-// months out), the engine must give exactly the oracle's answer.
+// Brute force check against an oracle. The oracle below does its own date arithmetic with the built-in Date
+// object and has its own hard-coded table of 2026 to 2029 holidays, typed in from the Legislation Act, 2006,
+// s. 88 (2) to (5). It imports only the two engine functions it tests, compute() and holidaysIn(), and calls
+// none of the engine's date helpers. The code is independent; the reading of the law is not. The same author
+// typed this table from the same reading of s. 88 and LTB rules 1.1 and 3.9, so a shared misreading would pass
+// both. For every start day from 1 January 2026 to 31 December 2029, every delivery method, and every kind of
+// tenancy the page offers (monthly with seven rent days, weekly with seven pay days, daily, and fixed terms
+// ending one to four months out), the engine must give exactly the oracle's answer.
 import { createRequire } from "module";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -34,15 +36,16 @@ const between = (a, b) => Math.round((D(b) - D(a)) / DAY);
 const wd = (iso) => new Date(D(iso)).getUTCDay();
 const dim = (y, m) => new Date(Date.UTC(y, m, 0)).getUTCDate();
 const ymd = (iso) => iso.split("-").map(Number);
-function closed(iso, assumed) {
+function closed(iso, assumed, weekdays = true) {
   const w = wd(iso);
   if (w === 0 || w === 6) return true;
+  if (!weekdays) return false;
   const k = HOLIDAYS[iso];
   return k === "s" || (k === "a" && assumed);
 }
-function deemed(sent, method, assumed = true) {
+function deemed(sent, method, assumed = true, weekdays = true) {
   if (method === "mail") return add(sent, 5);
-  if (method === "courier") { let d = add(sent, 1); while (closed(d, assumed)) d = add(d, 1); return d; }
+  if (method === "courier") { let d = add(sent, 1); while (closed(d, assumed, weekdays)) d = add(d, 1); return d; }
   return sent;
 }
 function lastFeb(iso) { const [y, m, d] = ymd(iso); return m === 2 && d === dim(y, 2); }
@@ -121,6 +124,18 @@ for (let sent = "2026-01-01"; sent < "2030-01-01"; sent = add(sent, 1)) {
   if (r.courierSkipped.map((h) => h.date).join() !== skipped.join()) fail(`${sent} courier skipped ${r.courierSkipped.map((h) => h.date)} oracle ${skipped}`);
   if ((plain !== dg) !== Boolean(r.assumedClosure)) fail(`${sent} courier assumed closure flag`);
   if (r.assumedClosure && r.assumedClosure.notice !== plain) fail(`${sent} courier without assumed closure ${r.assumedClosure.notice} oracle ${plain}`);
+  // Kinds: a Saturday or Sunday is a weekend day even when it is also on the list.
+  const kinds = skipped.map((x) => (wd(x) === 0 || wd(x) === 6 ? "weekend" : HOLIDAYS[x] === "a" ? "assumed" : "statutory"));
+  if (r.courierSkipped.map((h) => h.kind).join() !== kinds.join()) fail(`${sent} courier kinds ${r.courierSkipped.map((h) => h.kind)} oracle ${kinds}`);
+  // Offices open on every weekday: weekends only.
+  const open = deemed(sent, "courier", true, false);
+  if ((open !== dg) !== Boolean(r.officeOpen)) fail(`${sent} courier office open flag`);
+  if (r.officeOpen && r.officeOpen.notice !== open) fail(`${sent} courier offices open ${r.officeOpen.notice} oracle ${open}`);
+  // The same end date by every method.
+  if (r.valid) {
+    const n = lastNotice(r.termination, "monthly");
+    for (const x of r.byMethod) if (x.lastSendDay !== lastSend(n, x.method)) fail(`${sent} by method ${x.method} ${x.lastSendDay} oracle ${lastSend(n, x.method)}`);
+  }
 }
 if (failed) { console.error(failed + " failed out of " + checks); process.exit(1); }
-console.log("property tests (independent oracle): " + checks + " cases passed, plus " + courierChecks + " courier holiday cases and " + holidayChecks + " holiday tables");
+console.log("property tests (separate oracle): " + checks + " cases passed, plus " + courierChecks + " courier holiday cases and " + holidayChecks + " holiday tables");

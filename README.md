@@ -6,7 +6,7 @@ Find the last day to give ordinary tenant notice in Ontario, with delivery time 
 
 A "60 days from today" calculator answers the wrong question. This page starts from the end date and counts backward through the way you will actually deliver the notice, by hand, mail, courier or email, so the answer is the last day to send it that way.
 
-![Lease Exit Timer showing a monthly tenancy that ends on January 31, 2027](docs/screenshots/01-home.png)
+![The same input before and after: Form N9 mailed on Saturday, November 28, 2026. The first version said January 31, 2027 works; the current page counts it on December 3 and gives February 28, 2027](docs/screenshots/00-before-after.png)
 
 ## The problem
 
@@ -17,10 +17,10 @@ Ending a lease in Ontario usually takes 60 days of notice on official Form N9, e
 
 ## What it does
 
-1. Enter the day you will send or give notice, the kind of tenancy, and the rent day. For a fixed term, also enter the last day of the term as written in the lease. That date is checked first: empty, impossible, more than ten years out, or already over each get a plain message.
+1. Enter the day you will send or give notice, the kind of tenancy, and the rent day. A note beside the rent day says to check the rental period in the lease, because the day you usually pay is not always proof of it. For a fixed term, also enter the last day of the term as written in the lease. That date is checked first: empty, impossible, more than ten years out, or already over each get a plain message.
 2. Pick how it will reach the landlord: by hand or mail box, Canada Post, courier, or email. Email needs two ticks: the landlord agreed in writing to service by email (LTB rule 3.5), and that consent covers a tenant's notice to end the tenancy.
-3. Get the earliest ordinary end date, the last day to send notice that way, and a short timeline that shows the count. When the last mail or courier day is a weekend or holiday, the page also gives the last working day before it. Courier dates move past Saturdays, Sundays, statutory holidays and assumed Board office closures, and the page lists each day it skipped under those three headings.
-4. Optionally enter the rent, and the page says what one day late would cost, for example "One day late costs about $1,850.00."
+3. Get the earliest ordinary end date, the last day to send notice that way, a short timeline that shows the count, and one line with the last day for every method for the same end date. When the last mail or courier day is a weekend or holiday, the page also gives the last working day before it. Courier dates move past Saturdays and Sundays, which LTB rule 1.1 names as holidays, and past weekdays the Board's offices are assumed to be closed: the Legislation Act s. 88 holidays and Civic Holiday. Rule 1.1 turns on actual office closures and no closure calendar was checked, so the page labels those days as assumptions and says when one changes the end date.
+4. Optionally enter the rent, and the page estimates what one day late could mean, for example "One day late could mean about $1,850.00 more rent", with a note that it is an estimate, not a bill.
 5. Fill in Form N9 from the checklist under the date: every field the tenant or representative must complete on the official form, in order, with the termination date written as dd/mm/yyyy. The Office Use Only box is for the Board.
 6. Save the last day to your calendar with a one week reminder, print the plan, or copy a courtesy note. The courtesy note is not Form N9 and does not give notice.
 
@@ -48,8 +48,9 @@ npm test
 - `tests/test_delivery.mjs` has 31 checks for mail, courier, email, rent days 29 to 31, late fixed terms, bad input and the calendar file.
 - `tests/test_round2.mjs` has 55 checks for Ontario holidays in courier timing, the email consent guard, fixed term entry and the Form N9 checklist.
 - `tests/test_round3.mjs` has 52 checks for the rent line, the last working send day, statutory holidays against assumed closures, the service chain and the Form N9 wording.
-- `tests/test_property.mjs` is an independent oracle: it has its own hard coded holiday table for 2026 to 2029 and its own date maths, and shares no code with the engine. It checks 111,036 cases for every send day from 2026 to 2029, for monthly (seven rent days), weekly (seven pay days), daily, and fixed terms ending one to four months out, across four delivery methods. Each answer must match the oracle's earliest legal period end, last notice day and last send day. It also checks 1,461 courier hand offs and the four yearly holiday tables.
-- `tests/browser_check.py` runs the page in Chromium at desktop and phone width, with five examples, the email and fixed term guards, the rent box, a Civic Holiday case, the service chain, and axe-core.
+- `tests/test_round4.mjs` has 40 checks for the s. 88 weekend rules (January 1, 2028 on a Saturday adds no Monday; Canada Day 2029 moves to July 2), weekday holidays as assumed office closures, the date if the offices were open, the every method line, the rent estimate wording and the rental period note.
+- `tests/test_property.mjs` checks the engine against an oracle with its own hard coded holiday table for 2026 to 2029 and its own date maths. It imports only the two engine functions it tests, compute() and holidaysIn(). The code is independent, but the reading of the law is not: I typed the table from the same reading of s. 88 and LTB rules 1.1 and 3.9, so a shared misreading would pass both. It checks 111,036 cases for every send day from 2026 to 2029, for monthly (seven rent days), weekly (seven pay days), daily, and fixed terms ending one to four months out, across four delivery methods. Each answer must match the oracle's earliest legal period end, last notice day and last send day. It also checks 1,461 courier hand offs (skipped days, their kinds, the date if the offices were open, and the every method line) and the four yearly holiday tables.
+- `tests/browser_check.py` runs the page in Chromium at desktop and phone width, with five examples, the email and fixed term guards, the rent box, the every method line, a Civic Holiday case, the service chain, and axe-core.
 
 [docs/TESTING.md](docs/TESTING.md) explains what the tests found and what changed because of them. [docs/WALKTHROUGH.md](docs/WALKTHROUGH.md) is my own structured walkthrough of the page, labelled as a self review, not user testing.
 

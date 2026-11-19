@@ -145,9 +145,13 @@
   }
   function holidayOn(dt) { const iso = toISO(dt); return holidaysIn(dt.y).find((h) => h.date === iso) || null; }
   function isWeekend(dt) { const w = weekday(dt); return w === 0 || w === 6; }
-  // opts.assumed === false leaves out assumed closures (Civic Holiday) and counts statutory holidays only.
+  // LTB rule 1.1: a holiday is any Saturday, Sunday or other day on which the Board's offices are closed.
+  // Weekends are holidays by name. Every weekday in holidaysIn() is an assumed office closure: this page has
+  // not checked a Board closure calendar. opts.assumed === false leaves out the days not on the s. 88 list
+  // (Civic Holiday); opts.closures === false counts weekends only, as if the offices were open every weekday.
   function isCourierHoliday(dt, opts) {
     if (isWeekend(dt)) return true;
+    if (opts && opts.closures === false) return false;
     const h = holidayOn(dt);
     if (!h) return false;
     return h.kind === "statutory" || !(opts && opts.assumed === false);
@@ -173,8 +177,9 @@
   function courierSkipped(sent, opts) {
     const out = [];
     for (let d = addDays(sent, 1); isCourierHoliday(d, opts); d = addDays(d, 1)) {
-      const h = holidayOn(d);
-      out.push({ date: toISO(d), name: h ? h.name : (weekday(d) === 6 ? "Saturday" : "Sunday"), source: h ? h.source : "LTB Rules, rule 1.1", kind: h ? h.kind : "weekend" });
+      // A Saturday or Sunday is a holiday under rule 1.1 by name, even when it is also on the s. 88 list.
+      const h = holidayOn(d), we = isWeekend(d), day = weekday(d) === 6 ? "Saturday" : "Sunday";
+      out.push({ date: toISO(d), name: we ? (h ? day + " (" + h.name + ")" : day) : h.name, source: we ? "LTB Rules, rule 1.1" : h.source, kind: we ? "weekend" : h.kind });
     }
     return out;
   }
@@ -203,10 +208,11 @@
       rent = Number(rentText);
       if (!Number.isFinite(rent) || rent <= 0 || rent > 100000) return { error: "Rent should be a number such as 1850, or leave the rent box empty. It is optional.", field: "rent" };
     }
-    const notice = deemedGiven(sent, method, input.statutoryOnly ? { assumed: false } : undefined);
+    const dayOpts = input.weekendsOnly ? { closures: false } : input.statutoryOnly ? { assumed: false } : undefined;
+    const notice = deemedGiven(sent, method, dayOpts);
     const minDays = minDaysFor(kind);
     const out = { sent: toISO(sent), notice: toISO(notice), delivery: method, kind: kind, minDays: minDays, notes: [] };
-    if (method === "courier") out.courierSkipped = courierSkipped(sent, input.statutoryOnly ? { assumed: false } : undefined);
+    if (method === "courier") out.courierSkipped = courierSkipped(sent, dayOpts);
 
     function finish(term, special) {
       out.termination = toISO(term);
@@ -215,6 +221,8 @@
       out.lastSendDay = toISO(latestSendFor(last, method));
       out.daysOfNotice = daysBetween(notice, term);
       out.usedSpecial = special;
+      // The same end date by every method, so the difference between methods is visible at once.
+      out.byMethod = ["hand", "mail", "courier", "email"].map((m) => ({ method: m, lastSendDay: toISO(latestSendFor(last, m)) }));
       // Mail and courier need a pickup or a post office. When the last send day is a weekend or a statutory
       // holiday, say so and give the last ordinary working day before it.
       const ls = parseISO(out.lastSendDay);
@@ -235,6 +243,14 @@
         if (cmp(plain, notice) !== 0) {
           const alt = compute(Object.assign({}, base, { statutoryOnly: true }));
           out.assumedClosure = { notice: toISO(plain), termination: alt.termination, valid: alt.valid, changesEnd: alt.termination !== out.termination || alt.valid !== out.valid };
+        }
+        // Rule 1.1 turns on whether the Board's offices are closed. If they were open on every weekday skipped,
+        // the notice could count sooner. Say what that would change.
+        const open = deemedGiven(sent, method, { closures: false });
+        if (cmp(open, notice) !== 0) {
+          const alt = compute(Object.assign({}, base, { weekendsOnly: true }));
+          out.officeOpen = { notice: toISO(open), termination: alt.termination, valid: alt.valid, changesEnd: alt.termination !== out.termination || alt.valid !== out.valid,
+            days: out.courierSkipped.filter((h) => h.kind !== "weekend").map((h) => h.name) };
         }
       }
       if (rent !== null && out.valid) {

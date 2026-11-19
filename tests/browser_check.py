@@ -10,10 +10,10 @@ from playwright.async_api import async_playwright
 URL = sys.argv[1]
 AXE = sys.argv[2] if len(sys.argv) > 2 else None
 EXPECT = {
-    "ordinary": ["January 31, 2027", "December 2, 2026", "FORM N9 CHECKLIST", "31/01/2027", "Include all tenant names", "Every field the tenant or representative must complete", "One day late costs about $1,850.00", "February 28, 2027"],
-    "mail": ["February 28, 2027", "December 27, 2026"],
+    "ordinary": ["January 31, 2027", "December 2, 2026", "FORM N9 CHECKLIST", "31/01/2027", "Include all tenant names", "Every field the tenant or representative must complete", "One day late could mean about $1,850.00 more rent", "not a bill", "Same end date, every method.", "Canada Post November 27, 2026", "February 28, 2027"],
+    "mail": ["February 28, 2027", "December 27, 2026", "One day late could mean about $1,850.00 more rent"],
     "winter": ["February 28, 2027", "February and March rule", "FORM N9 CHECKLIST", "28/02/2027"],
-    "courier": ["March 31, 2027", "January 4, 2027", "New Year's Day", "Statutory holiday under the Legislation Act", "Weekend, a holiday under LTB rule 1.1", "One day late costs about $2,100.00"],
+    "courier": ["March 31, 2027", "January 4, 2027", "New Year's Day", "Ontario holiday under the Legislation Act, 2006, s. 88, assumed to be a Board office closure", "Saturday or Sunday, a holiday under LTB rule 1.1 by name", "has not checked a Board closure calendar", "an earlier end date of February 28, 2027", "One day late could mean about $2,100.00 more rent"],
     "late": ["TOO LATE FOR THIS FIXED TERM", "January 31, 2027"],
 }
 fails = []
@@ -81,7 +81,7 @@ async def main():
             await pg.dispatch_event("#notice", "change")
             await pg.wait_for_timeout(150)
             t = await pg.locator("#result").inner_text()
-            for n in ["Assumed office closure, not a statutory holiday", "Civic Holiday", "November 1, 2027", "an earlier end date of October 1, 2027"]:
+            for n in ["Not on the s. 88 list, also assumed to be a Board office closure", "Civic Holiday", "November 1, 2027", "an earlier end date of October 1, 2027"]:
                 if n not in t:
                     fails.append(f"{vw[0]} civic holiday case: missing {n}")
             # A bad rent amount is explained and marked.
@@ -115,4 +115,4 @@ asyncio.run(main())
 if fails:
     print("FAIL\n" + "\n".join(fails))
     sys.exit(1)
-print("browser check passed: 5 examples x 2 screen sizes, keyboard, email consent, fixed term entry, civic holiday note, rent check, service chain, layout" + (", axe 0 violations" if AXE else ""))
+print("browser check passed: 5 examples x 2 screen sizes, keyboard, email consent, fixed term entry, civic holiday note, rent check, every method line, service chain, layout" + (", axe 0 violations" if AXE else ""))

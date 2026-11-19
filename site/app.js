@@ -25,7 +25,7 @@ function toggleRows() {
   $("delivery-hint").textContent = {
     hand: "Hand it to the landlord or an authorized employee, or leave it where the landlord receives mail.",
     mail: "The date that counts is the fifth day after mailing, not the day you put it in the post.",
-    courier: "Rule 3.9 counts the day after hand off, or the next day that is not a holiday. Weekends and Ontario holidays are counted here.",
+    courier: "Rule 3.9 counts the day after hand off, or the next day that is not a holiday. Weekends and assumed Board office closures are counted here.",
     email: "Email is valid service only with the landlord's written consent (LTB rule 3.5), and that consent should clearly cover a notice to end the tenancy."
   }[m];
 }
@@ -45,21 +45,29 @@ function courierNote(out) {
   const group = (k) => out.courierSkipped.filter((h) => h.kind === k).map((h) => pretty(h.date) + ' (' + h.name + ')');
   const parts = [];
   const wk = group("weekend"), st = group("statutory"), as = group("assumed");
-  if (st.length) parts.push('Statutory holiday under the Legislation Act, 2006, s. 88: ' + st.join(", ") + '.');
-  if (wk.length) parts.push('Weekend, a holiday under LTB rule 1.1: ' + wk.join(", ") + '.');
-  if (as.length) parts.push('Assumed office closure, not a statutory holiday: ' + as.join(", ") + '. It is counted to be safe.');
+  if (wk.length) parts.push('Saturday or Sunday, a holiday under LTB rule 1.1 by name: ' + wk.join(", ") + '.');
+  if (st.length) parts.push('Ontario holiday under the Legislation Act, 2006, s. 88, assumed to be a Board office closure: ' + st.join(", ") + '.');
+  if (as.length) parts.push('Not on the s. 88 list, also assumed to be a Board office closure: ' + as.join(", ") + '.');
   let html = '<div class="source-note" id="courier-skipped"><p><strong>Courier date moved past these days (LTB rule 3.9).</strong></p><ul>' + parts.map((t) => '<li>' + t + '</li>').join("") + '</ul>';
-  if (out.assumedClosure) {
-    html += out.assumedClosure.changesEnd
-      ? '<p>If the Board\'s offices are open on that day, the notice would count on ' + pretty(out.assumedClosure.notice) + ' and an earlier end date of ' + pretty(out.assumedClosure.termination) + ' could be available. This page shows the later date, because it does not depend on that guess. Sending one day earlier avoids the question.</p>'
-      : '<p>Without the assumed closure the notice would count on ' + pretty(out.assumedClosure.notice) + '. The end date is the same either way.</p>';
+  if (st.length || as.length) html += '<p>Rule 1.1 counts a weekday as a holiday only if the Board\'s offices are closed that day. This page has not checked a Board closure calendar, so each weekday closure is an assumption. An extra closed day can only make the advised day earlier.</p>';
+  const o = out.officeOpen;
+  if (o) {
+    html += o.changesEnd
+      ? '<p>If the Board\'s offices are open on ' + o.days.join(" and ") + ', the notice would count on ' + pretty(o.notice) + ' and an earlier end date of ' + pretty(o.termination) + ' could be available. This page shows the later date, because it does not depend on that guess. Sending one day earlier avoids the question.</p>'
+      : '<p>Even if the Board\'s offices are open on ' + o.days.join(" and ") + ', the end date is the same. The notice would count on ' + pretty(o.notice) + '.</p>';
   }
   return html + '</div>';
+}
+function methodsNote(out) {
+  if (!out.byMethod) return "";
+  const name = { hand: "By hand or mail box", mail: "Canada Post", courier: "Courier", email: "Email, with written consent" };
+  return '<p class="note" id="by-method"><strong>Same end date, every method.</strong> To end on ' + pretty(out.termination) + ', the last day to send is: ' +
+    out.byMethod.map((x) => (x.method === out.delivery ? '<strong>' : '') + name[x.method] + ' ' + pretty(x.lastSendDay) + (x.method === out.delivery ? '</strong>' : '')).join("; ") + '.</p>';
 }
 function lateNote(out) {
   const c = out.lateCost;
   const unit = c.periods === 1 ? c.unit : c.unit + "s";
-  return '<p class="note" id="late-cost"><strong>One day late costs about ' + money(c.amount) + '.</strong> ' + (out.delivery === "hand" ? "Giving" : "Sending") + ' it on ' + pretty(c.sendDay) + ' instead would end the tenancy on ' + pretty(c.termination) + (c.viaFallback ? ' as a monthly tenancy after the fixed term' : '') + ', ' + c.periods + ' more ' + unit + ' of rent at ' + money(c.rent) + '.</p>';
+  return '<p class="note" id="late-cost"><strong>One day late could mean about ' + money(c.amount) + ' more rent.</strong> ' + (out.delivery === "hand" ? "Giving" : "Sending") + ' it on ' + pretty(c.sendDay) + ' instead would make the earliest end date ' + pretty(c.termination) + (c.viaFallback ? ' as a monthly tenancy after the fixed term' : '') + ', ' + c.periods + ' more ' + unit + ' at ' + money(c.rent) + '. This is an estimate from the rent you typed, not a bill. What you actually owe depends on your tenancy, for example if you and your landlord agree in writing to end it on another date.</p>';
 }
 function render(out) {
   current = out;
@@ -87,6 +95,7 @@ function render(out) {
   if (!late) {
     html += '<div class="deadline"><span>LAST DAY TO ' + (out.delivery === "hand" ? "GIVE" : "SEND") + ' IT THIS WAY</span><strong>' + pretty(out.lastSendDay) + '</strong><small>For notice that counts by ' + pretty(out.lastNoticeDay) + '</small></div>';
     html += '<ol class="timeline">' + steps.map((s) => '<li><span>' + s[0] + '</span><strong>' + s[1] + '</strong></li>').join("") + '</ol>';
+    if (out.valid) html += methodsNote(out);
     if (out.delivery === "courier" && out.courierSkipped && out.courierSkipped.length) html += courierNote(out);
     if (out.lateCost) html += lateNote(out);
     if (out.sendDayNote) html += '<p class="note" id="send-day-note">' + out.sendDayNote + '</p>';
@@ -119,7 +128,7 @@ function download(filename, text, type) {
 }
 const examples = {
   ordinary: { date: "2026-11-19", kind: "monthly", due: "1", delivery: "hand", rent: "1850" },
-  mail: { date: "2026-11-28", kind: "monthly", due: "1", delivery: "mail", rent: "1950" },
+  mail: { date: "2026-11-28", kind: "monthly", due: "1", delivery: "mail", rent: "1850" },
   courier: { date: "2026-12-31", kind: "monthly", due: "1", delivery: "courier", rent: "2100" },
   winter: { date: "2027-01-01", kind: "monthly", due: "1", delivery: "hand" },
   late: { date: "2026-11-19", kind: "fixed", due: "1", expiry: "2026-12-31", delivery: "hand" }
