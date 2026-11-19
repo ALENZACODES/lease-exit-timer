@@ -92,7 +92,8 @@ eq("period check note", page.includes('id="period-check"') && page.includes("The
 eq("due box described by the note", page.includes('aria-describedby="due-hint period-check"'), true);
 
 // Wording and limits.
-eq("courier hint mentions assumed closures", page.includes("weekdays the Board's offices are assumed to be closed"), true);
+// Reworded later: weekday closures are now labelled UNKNOWN and counted as closed.
+eq("courier hint mentions weekday closures", page.includes("weekdays when the Board's offices may be closed") && page.includes("marked UNKNOWN and counted as closed"), true);
 eq("holiday kinds state the s. 88 weekend rules exactly", rules.holiday_kinds.statutory.includes("the Monday after a New Year's Day that falls on a Sunday") && rules.holiday_kinds.statutory.includes("Canada Day moves to July 2 when July 1 is a Sunday"), true);
 eq("limits name rule 1.14 and s. 89 (1)", rules.limits.some((t) => t.includes("rule 1.14") && t.includes("s. 89 (1)") && t.includes("s. 193")), true);
 eq("limits name rule 3.6", rules.limits.some((t) => t.includes("3.6")), true);

@@ -25,7 +25,7 @@ function toggleRows() {
   $("delivery-hint").textContent = {
     hand: "Hand it to the landlord or an authorized employee, or leave it where the landlord receives mail.",
     mail: "The date that counts is the fifth day after mailing, not the day you put it in the post.",
-    courier: "Rule 3.9 counts the day after hand off, or the next day that is not a holiday. Weekends and assumed Board office closures are counted here.",
+    courier: "Rule 3.9 counts the day after hand off, or the next day that is not a holiday. Weekends are counted here, and weekday Board closures, which are UNKNOWN, are counted as closed.",
     email: "Email is valid service only with the landlord's written consent (LTB rule 3.5), and that consent should clearly cover a notice to end the tenancy."
   }[m];
 }
