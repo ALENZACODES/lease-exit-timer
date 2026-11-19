@@ -5,9 +5,9 @@
   "disclaimer": "This page helps you count ordinary notice dates under the Residential Tenancies Act, 2006. It is not legal advice and it does not file a notice for you. Use the official Form N9 from Tribunals Ontario, and read the instructions on that form.",
   "sources": [
     {
-      "name": "Residential Tenancies Act, 2006, S.O. 2006, c. 17, sections 38, 44, 47 and 191",
+      "name": "Residential Tenancies Act, 2006, S.O. 2006, c. 17, sections 2 (1), 38, 44, 47 and 191",
       "url": "https://www.ontario.ca/laws/statute/06r17",
-      "note": "Official e-Laws text, read on 2026-11-19, America/Toronto. Section 44 sets the 28 and 60 day periods and the February and March rule. Section 47 lets a tenant end a tenancy at the end of a period or term by notice under s. 44. Section 191 (3) says mail counts on the fifth day after mailing. Section 38 (1) turns an ended fixed term into a monthly tenancy."
+      "note": "Official e-Laws text, read on 2026-11-19, America/Toronto. Section 2 (1) defines the Rules as the Board's rules of practice and procedure. Section 44 sets the 28 and 60 day periods and the February and March rule. Section 47 lets a tenant end a tenancy at the end of a period or term by notice under s. 44. Section 191 (1) lists how a notice is given, and clause (g) adds any other means allowed in the Rules. Section 191 (3) says mail counts on the fifth day after mailing. Section 38 (1) turns an ended fixed term into a monthly tenancy."
     },
     {
       "name": "Legislation Act, 2006, S.O. 2006, c. 21, Sched. F, sections 87, 88 and 89 (3)",
@@ -17,12 +17,12 @@
     {
       "name": "Landlord and Tenant Board, Form N9: Tenant's Notice to End the Tenancy (v. 01/04/2022), important information pages",
       "url": "https://tribunalsontario.ca/documents/ltb/Notices%20of%20Termination%20%26%20Instructions/N9.pdf",
-      "note": "PDF returned HTTP 200 on 2026-11-09, America/Toronto."
+      "note": "Every field the tenant or representative must complete is on pages 1 and 3. The Office Use Only box on page 3 is for the Board. PDF returned HTTP 200 on 2026-11-19, America/Toronto."
     },
     {
       "name": "Landlord and Tenant Board Rules of Procedure, rules 1.1, 3.1, 3.5 and 3.9",
       "url": "https://tribunalsontario.ca/documents/ltb/Rules/LTB-Rules_of_Procedure.html",
-      "note": "Rule 1.1 defines a holiday as any Saturday, Sunday or other day the Board's offices are closed. Rule 3.5 allows service by email only with written consent. Rule 3.9: courier counts the day after hand off, or the next day that is not a holiday; email and hand delivery count the same day. Read on 2026-11-19, America/Toronto."
+      "note": "Rule 1.1 defines a holiday as any Saturday, Sunday or other day the Board's offices are closed. Rule 3.1 allows service by courier, and by email if the person receiving it has consented in writing, in addition to the methods in the Act. Rule 3.5 says parties may consent in writing at any time to service by email, and rule 3.6 says that consent may be revoked in writing. Rule 3.9: courier counts the day after it was given to the courier, or if that day is a holiday the next day that is not a holiday; email counts the day it was sent; hand delivery the day it was given. Read on 2026-11-19, America/Toronto."
     },
     {
       "name": "Landlord and Tenant Board, Consent to Service by Email (v. 01/04/2022)",
@@ -110,13 +110,13 @@
       "id": "email",
       "label": "By email, only if the landlord's written consent covers this notice",
       "deemed": "the same day",
-      "source": "LTB Rules 3.1, 3.5 and 3.9"
+      "source": "RTA s. 191 (1) (g); LTB Rules 3.1, 3.5, 3.6 and 3.9"
     },
     {
       "id": "courier",
       "label": "By courier",
-      "deemed": "the day after hand off, or the next day that is not a holiday (Saturday, Sunday, a Legislation Act s. 88 holiday, or Civic Holiday)",
-      "source": "LTB Rules 1.1 and 3.9; Legislation Act, 2006, s. 88"
+      "deemed": "the day after hand off, or the next day that is not a holiday: not a Saturday, Sunday or Legislation Act s. 88 holiday, and not Civic Holiday, which is treated as a possible office closure",
+      "source": "RTA s. 191 (1) (g); LTB Rules 1.1, 3.1 and 3.9; Legislation Act, 2006, s. 88"
     },
     {
       "id": "mail",
@@ -129,7 +129,50 @@
   "retrieved_update": "2026-11-19",
   "limits": [
     "Yearly tenancies are not offered.",
-    "Courier and email timing rely on LTB rules 3.1, 3.5 and 3.9, which are written for Board matters.",
+    "Courier and email timing rely on RTA s. 191 (1) (g) and LTB rules 3.1, 3.5 and 3.9, which are written mainly for Board matters. See service_chain for the reading used.",
+    "Civic Holiday is treated as a possible office closure, not a statutory holiday, and the page says when that changes a date.",
     "A day fixed as a holiday by proclamation, or an unplanned office closure, is not known ahead."
-  ]
+  ],
+  "service_chain": {
+    "summary": "How courier and email reach a tenant's notice. The Act lists hand delivery, the landlord's employee, the mail box and Canada Post in s. 191 (1) (a) to (f). Clause (g) adds any other means allowed in the Rules, and s. 2 (1) says the Rules are the Board's rules of practice and procedure. Rule 3.1 is the Rule that allows courier, and email with written consent. Rule 3.5 is how that consent is given, and rule 3.6 is how it is taken back. Rule 3.9 says on which day each method counts. Rule 1.1 says what a holiday is.",
+    "links": [
+      {
+        "from": "RTA s. 191 (1) (g)",
+        "text": "\"by any other means allowed in the Rules\"",
+        "to": "LTB rule 3.1"
+      },
+      {
+        "from": "RTA s. 2 (1)",
+        "text": "\"Rules means the rules of practice and procedure made by the Board under section 176 of this Act and section 25.1 of the Statutory Powers Procedure Act\"",
+        "to": "LTB Rules of Procedure"
+      },
+      {
+        "from": "LTB rule 3.1",
+        "text": "\"courier to party's address\" and \"by email if the person or party receiving it has consented in writing to service by email\"",
+        "to": "LTB rules 3.5 and 3.9"
+      },
+      {
+        "from": "LTB rule 3.5",
+        "text": "\"Parties may consent in writing at any time to service by email.\"",
+        "to": "the two email ticks on this page"
+      },
+      {
+        "from": "LTB rule 3.9",
+        "text": "\"day after it was given to the courier when sent by courier, or if that day is a holiday, the next day that is not a holiday\" and \"day it was sent when sent by email\"",
+        "to": "deemedGiven in dates.js"
+      }
+    ],
+    "assumptions": [
+      "Rule 3 is headed Service of Documents on a Person or Party and is written mainly for Board matters. This page reads rule 3.1 as one of the means allowed in the Rules under s. 191 (1) (g) for a tenant's notice given before any application. The Act does not say that in so many words, and the Board could read it differently.",
+      "A landlord's written consent to email is taken to cover Form N9 only if it says so. The Board's consent form does not list a tenant's notice to end the tenancy, and consent can be revoked under rule 3.6.",
+      "Hand delivery, the mail box and Canada Post come straight from s. 191 (1) and (3) and do not depend on the Rules. When the date matters most, those are the safer methods."
+    ]
+  },
+  "holiday_kinds": {
+    "statutory": "Listed in the Legislation Act, 2006, s. 88 (2), with the extra days in s. 88 (3), (4) and (5). These are holidays under LTB rule 1.1 only because the Board's offices are closed on them; the page assumes they are.",
+    "weekend": "Saturday and Sunday, named in LTB rule 1.1 itself.",
+    "assumed": "Civic Holiday. Not a statutory holiday. Ontario public offices usually close, so it is treated as a possible Board office closure. Counting it can move a courier date one day later, which can make the advised send day earlier and, in a few cases, the end date one period later. The page shows the date without it when that happens.",
+    "unknown": "A day fixed by proclamation, or an unplanned office closure, cannot be known ahead. Leave a spare day."
+  },
+  "n9_scope": "Every field the tenant or representative must complete. The Office Use Only box is left out. The page does not fill in, sign or send the form."
 }

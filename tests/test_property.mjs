@@ -1,5 +1,9 @@
-// Brute force check: for every start day from 2026 through 2029, every kind, every rent day and every
-// delivery method, the answer must be a legal date and no earlier legal date may exist.
+// Brute force check with an independent oracle. The oracle below does its own date arithmetic with the
+// built-in Date object and its own hard-coded table of 2026 to 2029 holidays, typed in from the Legislation
+// Act, 2006, s. 88 (2) to (5). It does not call the engine's date helpers or holiday code. For every start
+// day from 1 January 2026 to 31 December 2029, every delivery method, and every kind of tenancy the page
+// offers (monthly with seven rent days, weekly with seven pay days, daily, and fixed terms ending one to four
+// months out), the engine must give exactly the oracle's answer.
 import { createRequire } from "module";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -7,63 +11,116 @@ const require = createRequire(import.meta.url);
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const L = require(join(root, "site/dates.js"));
 
-let checks = 0, failed = 0;
-function fail(msg) { failed++; if (failed < 20) console.error("FAIL", msg); }
+// Hard-coded holidays. "s" = statutory (s. 88), "a" = assumed office closure (Civic Holiday).
+const HOLIDAYS = {
+  "2026-01-01": "s", "2026-02-16": "s", "2026-04-03": "s", "2026-04-06": "s", "2026-05-18": "s", "2026-07-01": "s",
+  "2026-08-03": "a", "2026-09-07": "s", "2026-10-12": "s", "2026-11-11": "s", "2026-12-25": "s", "2026-12-26": "s",
+  "2027-01-01": "s", "2027-02-15": "s", "2027-03-26": "s", "2027-03-29": "s", "2027-05-24": "s", "2027-07-01": "s",
+  "2027-08-02": "a", "2027-09-06": "s", "2027-10-11": "s", "2027-11-11": "s", "2027-12-25": "s", "2027-12-26": "s",
+  "2027-12-27": "s", // s. 88 (5): Christmas Day on a Saturday, so the Monday after is also a holiday
+  "2028-01-01": "s", "2028-02-21": "s", "2028-04-14": "s", "2028-04-17": "s", "2028-05-22": "s", "2028-07-01": "s",
+  "2028-08-07": "a", "2028-09-04": "s", "2028-10-09": "s", "2028-11-11": "s", "2028-12-25": "s", "2028-12-26": "s",
+  "2029-01-01": "s", "2029-02-19": "s", "2029-03-30": "s", "2029-04-02": "s", "2029-05-21": "s",
+  "2029-07-02": "s", // s. 88 (4): Canada Day falls on a Sunday, so it is kept on July 2
+  "2029-08-06": "a", "2029-09-03": "s", "2029-10-08": "s", "2029-11-11": "s", "2029-12-25": "s", "2029-12-26": "s",
+  "2030-01-01": "s"
+};
 
-function isPeriodEnd(dt, kind, due, pay) {
-  if (kind === "daily") return true;
-  if (kind === "weekly") return L.weekday(dt) === (pay + 6) % 7;
-  const nextDay = L.addDays(dt, 1);
-  return nextDay.d === Math.min(due, L.daysInMonth(nextDay.y, nextDay.m));
+const DAY = 86400000;
+const D = (iso) => Date.parse(iso + "T00:00:00Z");
+const I = (ms) => new Date(ms).toISOString().slice(0, 10);
+const add = (iso, n) => I(D(iso) + n * DAY);
+const between = (a, b) => Math.round((D(b) - D(a)) / DAY);
+const wd = (iso) => new Date(D(iso)).getUTCDay();
+const dim = (y, m) => new Date(Date.UTC(y, m, 0)).getUTCDate();
+const ymd = (iso) => iso.split("-").map(Number);
+function closed(iso, assumed) {
+  const w = wd(iso);
+  if (w === 0 || w === 6) return true;
+  const k = HOLIDAYS[iso];
+  return k === "s" || (k === "a" && assumed);
 }
-function legal(notice, dt, kind) {
+function deemed(sent, method, assumed = true) {
+  if (method === "mail") return add(sent, 5);
+  if (method === "courier") { let d = add(sent, 1); while (closed(d, assumed)) d = add(d, 1); return d; }
+  return sent;
+}
+function lastFeb(iso) { const [y, m, d] = ymd(iso); return m === 2 && d === dim(y, 2); }
+function lastMar(iso) { const [, m, d] = ymd(iso); return m === 3 && d === 31; }
+function legal(notice, t, kind) {
   const min = kind === "weekly" || kind === "daily" ? 28 : 60;
-  if (L.daysBetween(notice, dt) >= min) return true;
-  if (kind === "monthly" && L.isLastDayOfFebruary(dt)) return L.cmp(notice, L.make(dt.y, 1, 1)) <= 0;
-  if (kind === "monthly" && L.isLastDayOfMarch(dt)) return L.cmp(notice, L.make(dt.y, 2, 1)) <= 0;
+  if (between(notice, t) >= min) return true;
+  if (kind === "weekly" || kind === "daily") return false;
+  const y = ymd(t)[0];
+  if (lastFeb(t)) return notice <= y + "-01-01";
+  if (lastMar(t)) return notice <= y + "-02-01";
   return false;
 }
+function periodEnd(t, kind, due, pay) {
+  if (kind === "daily") return true;
+  if (kind === "weekly") return wd(t) === (pay + 6) % 7;
+  const [y, m, d] = ymd(add(t, 1));
+  return d === Math.min(due, dim(y, m));
+}
+function earliest(notice, kind, due, pay) {
+  for (let t = add(notice, 1), i = 0; i < 200; i++, t = add(t, 1)) if (periodEnd(t, kind, due, pay) && legal(notice, t, kind)) return t;
+  throw new Error("oracle found no date");
+}
+function lastNotice(t, kind) { let n = t; while (!legal(n, t, kind)) n = add(n, -1); return n; }
+function lastSend(n, method) { let s = n; while (deemed(s, method) > n) s = add(s, -1); return s; }
 
-let day = L.parseISO("2026-01-01");
-const stop = L.parseISO("2030-01-01");
-const methods = ["hand", "email", "courier", "mail"];
+let checks = 0, failed = 0, courierChecks = 0, holidayChecks = 0;
+function fail(msg) { failed++; if (failed < 20) console.error("FAIL", msg); }
 const OK = { emailConsent: true, emailCoversNotice: true };
-let courierChecks = 0;
+
+// The engine's holiday list must match the typed table, kind for kind.
+for (let y = 2026; y <= 2029; y++) {
+  const mine = Object.entries(HOLIDAYS).filter(([d]) => d.startsWith(y + "-")).map(([d, k]) => d + k).join(",");
+  const theirs = L.holidaysIn(y).map((h) => h.date + (h.kind === "assumed" ? "a" : "s")).join(",");
+  holidayChecks++;
+  if (mine !== theirs) fail(`holidays ${y}: table ${mine} engine ${theirs}`);
+}
+
+function expectSame(label, r, exp) {
+  checks++;
+  for (const k of Object.keys(exp)) if (r[k] !== exp[k]) { fail(`${label}: ${k} engine ${r[k]} oracle ${exp[k]}`); return; }
+}
+const methods = ["hand", "email", "courier", "mail"];
 const dues = [1, 2, 15, 28, 29, 30, 31];
-while (L.cmp(day, stop) < 0) {
-  const iso = L.toISO(day);
+for (let sent = "2026-01-01"; sent < "2030-01-01"; sent = add(sent, 1)) {
   for (const method of methods) {
+    const notice = deemed(sent, method);
+    const base = { noticeDate: sent, delivery: method, ...OK };
     for (const due of dues) {
-      const r = L.compute({ noticeDate: iso, kind: "monthly", dueDay: due, delivery: method, ...OK });
-      const notice = L.parseISO(r.notice), t = L.parseISO(r.termination);
-      checks++;
-      if (!isPeriodEnd(t, "monthly", due)) fail(`${iso} ${method} due ${due}: ${r.termination} is not a period end`);
-      if (!legal(notice, t, "monthly")) fail(`${iso} ${method} due ${due}: ${r.termination} is too early`);
-      for (let x = L.addDays(notice, 1); L.cmp(x, t) < 0; x = L.addDays(x, 1)) {
-        if (isPeriodEnd(x, "monthly", due) && legal(notice, x, "monthly")) { fail(`${iso} ${method} due ${due}: earlier ${L.toISO(x)} was legal`); break; }
-      }
-      // The last send day must still produce the same termination date, and the day after must not.
-      const s = L.compute({ noticeDate: r.lastSendDay, kind: "monthly", dueDay: due, delivery: method, ...OK });
-      if (s.termination !== r.termination) fail(`${iso} ${method} due ${due}: last send day ${r.lastSendDay} gives ${s.termination}`);
-      const after = L.compute({ noticeDate: L.toISO(L.addDays(L.parseISO(r.lastSendDay), 1)), kind: "monthly", dueDay: due, delivery: method, ...OK });
-      if (after.termination === r.termination) fail(`${iso} ${method} due ${due}: day after last send day still gives ${r.termination}`);
+      const t = earliest(notice, "monthly", due), n = lastNotice(t, "monthly");
+      expectSame(`${sent} ${method} monthly ${due}`, L.compute({ ...base, kind: "monthly", dueDay: due }), { notice, termination: t, lastNoticeDay: n, lastSendDay: lastSend(n, method), valid: true });
     }
     for (let pay = 0; pay < 7; pay++) {
-      const r = L.compute({ noticeDate: iso, kind: "weekly", payWeekday: pay, delivery: method, ...OK });
-      const notice = L.parseISO(r.notice), t = L.parseISO(r.termination);
-      checks++;
-      if (!isPeriodEnd(t, "weekly", 0, pay) || !legal(notice, t, "weekly")) fail(`${iso} weekly ${pay}: ${r.termination}`);
-      if (L.daysBetween(notice, t) > 34) fail(`${iso} weekly ${pay}: more than one week of slack`);
+      const t = earliest(notice, "weekly", 0, pay), n = lastNotice(t, "weekly");
+      expectSame(`${sent} ${method} weekly ${pay}`, L.compute({ ...base, kind: "weekly", payWeekday: pay }), { notice, termination: t, lastNoticeDay: n, lastSendDay: lastSend(n, method), valid: true });
+    }
+    {
+      const t = earliest(notice, "daily"), n = lastNotice(t, "daily");
+      expectSame(`${sent} ${method} daily`, L.compute({ ...base, kind: "daily" }), { notice, termination: t, lastNoticeDay: n, lastSendDay: lastSend(n, method), valid: true });
+    }
+    const [y, m] = ymd(sent);
+    for (let k = 1; k <= 4; k++) {
+      const yy = y + Math.floor((m - 1 + k) / 12), mm = ((m - 1 + k) % 12) + 1;
+      const expiry = yy + "-" + String(mm).padStart(2, "0") + "-" + String(dim(yy, mm)).padStart(2, "0");
+      const r = L.compute({ ...base, kind: "fixed", dueDay: 1, expiryDate: expiry });
+      if (expiry <= notice) { checks++; if (!r.error) fail(`${sent} ${method} fixed ${expiry}: expected an error`); continue; }
+      const n = lastNotice(expiry, "fixed");
+      expectSame(`${sent} ${method} fixed ${expiry}`, r, { notice, termination: expiry, lastNoticeDay: n, lastSendDay: lastSend(n, method), valid: legal(notice, expiry, "fixed") });
     }
   }
-  // Courier: the deemed day must be the first day after hand off that is not a Saturday, Sunday or holiday.
-  const dg = L.deemedGiven(day, "courier");
+  // Courier: the skipped days and the assumed closure note must match the oracle.
+  const dg = deemed(sent, "courier"), plain = deemed(sent, "courier", false);
+  const r = L.compute({ noticeDate: sent, delivery: "courier", kind: "monthly", dueDay: 1 });
+  const skipped = []; for (let x = add(sent, 1); x < dg; x = add(x, 1)) skipped.push(x);
   courierChecks++;
-  if (L.isCourierHoliday(dg)) fail(`${iso} courier deemed ${L.toISO(dg)} is a holiday`);
-  for (let x = L.addDays(day, 1); L.cmp(x, dg) < 0; x = L.addDays(x, 1)) {
-    if (!L.isCourierHoliday(x)) { fail(`${iso} courier skipped working day ${L.toISO(x)}`); break; }
-  }
-  day = L.addDays(day, 1);
+  if (r.courierSkipped.map((h) => h.date).join() !== skipped.join()) fail(`${sent} courier skipped ${r.courierSkipped.map((h) => h.date)} oracle ${skipped}`);
+  if ((plain !== dg) !== Boolean(r.assumedClosure)) fail(`${sent} courier assumed closure flag`);
+  if (r.assumedClosure && r.assumedClosure.notice !== plain) fail(`${sent} courier without assumed closure ${r.assumedClosure.notice} oracle ${plain}`);
 }
 if (failed) { console.error(failed + " failed out of " + checks); process.exit(1); }
-console.log("property tests: " + checks + " cases passed, plus " + courierChecks + " courier holiday cases");
+console.log("property tests (independent oracle): " + checks + " cases passed, plus " + courierChecks + " courier holiday cases and " + holidayChecks + " holiday tables");
