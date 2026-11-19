@@ -15,7 +15,7 @@ The current engine passes all 81,816 brute force cases, and the 27 original chec
 
 ## 2. Reading the delivery rule changed the main answer
 
-The first version asked for "the date you can give notice" and treated it as the day notice counts. Section 191 (3) of the Residential Tenancies Act says mail counts on the fifth day after mailing. A renter who mails Form N9 on 28 November 2026 for a 31 January 2027 move would miss it by a few days and owe another month.
+The first version asked for "the date you can give notice" and treated it as the day notice counts. Section 191 (3) of the Residential Tenancies Act says mail counts on the fifth day after mailing. A renter who mails Form N9 on 28 November 2026 for a 31 January 2027 move would be one day late and owe another month.
 
 The page now asks how notice will reach the landlord and shows two dates: the day notice must count by, and the last day to send it that way. Email is refused unless the user confirms the landlord agreed in writing, because rule 3.1 of the Board's rules only allows email with written consent. Courier uses rule 3.9, with weekends handled and a visible warning about other holidays.
 
