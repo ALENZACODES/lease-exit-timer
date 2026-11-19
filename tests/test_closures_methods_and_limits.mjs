@@ -1,4 +1,4 @@
-// Round 4 checks: weekday holidays are assumed Board office closures under LTB rule 1.1, the s. 88 weekend
+// Weekday holidays as assumed Board office closures under LTB rule 1.1, the s. 88 weekend
 // rules for New Year's Day 2028 and Canada Day 2029, the same end date by every method, the softer late
 // cost line, the rental period note, and the limits on rule 1.14 and s. 89 (1).
 import { createRequire } from "module";
@@ -60,8 +60,10 @@ eq("weekendsOnly result skips weekends only", L.compute({ noticeDate: "2026-12-3
 // The same end date by every method.
 const ord = L.compute({ noticeDate: "2026-11-19", kind: "monthly", dueDay: 1, delivery: "hand" });
 eq("by method for jan 31 2027", ord.byMethod, [
-  { method: "hand", lastSendDay: "2026-12-02" }, { method: "mail", lastSendDay: "2026-11-27" },
-  { method: "courier", lastSendDay: "2026-12-01" }, { method: "email", lastSendDay: "2026-12-02" }]);
+  { method: "hand", lastSendDay: "2026-12-02", lastPracticalSendDay: "2026-12-02" },
+  { method: "mail", lastSendDay: "2026-11-27", lastPracticalSendDay: "2026-11-27" },
+  { method: "courier", lastSendDay: "2026-12-01", lastPracticalSendDay: "2026-12-01" },
+  { method: "email", lastSendDay: "2026-12-02", lastPracticalSendDay: "2026-12-02" }]);
 eq("by method matches own method", ord.byMethod.find((x) => x.method === ord.delivery).lastSendDay, ord.lastSendDay);
 eq("by method for march 31 2027 courier", ny.byMethod.map((x) => x.lastSendDay), ["2027-02-01", "2027-01-27", "2027-01-31", "2027-02-01"]);
 let same = true;
@@ -98,5 +100,5 @@ eq("holiday kinds state the s. 88 weekend rules exactly", rules.holiday_kinds.st
 eq("limits name rule 1.14 and s. 89 (1)", rules.limits.some((t) => t.includes("rule 1.14") && t.includes("s. 89 (1)") && t.includes("s. 193")), true);
 eq("limits name rule 3.6", rules.limits.some((t) => t.includes("3.6")), true);
 
-console.log(failed ? failed + " failed" : "round 4 tests: " + passed + " passed");
+console.log(failed ? failed + " failed" : "closures, methods and limits tests: " + passed + " passed");
 if (failed) process.exit(1);

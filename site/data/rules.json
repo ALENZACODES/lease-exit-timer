@@ -33,6 +33,11 @@
       "name": "Ministry of Municipal Affairs and Housing, A guide to the standard lease for rental housing, part D",
       "url": "https://files.ontario.ca/mmah-guide-to-standard-lease-for-rental-housing-en-2022-04-19.pdf",
       "note": "Official guide PDF returned HTTP 200 on 2026-11-09, America/Toronto."
+    },
+    {
+      "name": "Canada Post official holiday schedule",
+      "url": "https://www.canadapost-postescanada.ca/cpc/en/support/kb/other-products-services/post-office/find-out-operating-hours-on-holidays.page",
+      "note": "Read on 19 November 2026, America/Toronto. The page lists official 2026 and 2027 dates, including Boxing Day (National) on December 28 in both years, and says Canada Post is closed on those holidays with no collection or delivery of mail. It also says: \"When a holiday falls on a Saturday or Sunday, it may be applied to the next business day.\" Regular collection and delivery occur on provincial Family Day holidays. This page uses the published 2026 and 2027 Ontario dates as listed, and for later years computes the same holiday names with that weekend rule. The calendar is used only for the advised mail send day, not for when notice legally counts under s. 191 (3)."
     }
   ],
   "ordinary_rules": [
@@ -131,7 +136,7 @@
     "Yearly tenancies are not offered.",
     "Courier and email timing rely on RTA s. 191 (1) (g) and LTB rules 3.1, 3.5, 3.6 and 3.9, which are written mainly for Board matters. See service_chain for the reading used.",
     "Under LTB rule 1.1 a weekday is a holiday only if the Board's offices are closed. No Board closure calendar was found, so the s. 88 holidays and Civic Holiday are labelled UNKNOWN and counted as closed, and the page says when that changes a date.",
-    "The January 1 and February 1 deadlines in s. 44 (5) are extended under Legislation Act s. 89 (1) when they fall on a Sunday or an s. 88 holiday, to the next day that is neither. January 1, 2027 becomes Saturday, January 2, 2027. RTA s. 193 and LTB rule 1.14 could be read to reach the next weekday as well, for example Monday, January 4, 2027. The page names that day and does not rely on it. The 60 day and 28 day minimum periods are not extended, because they are minimum notice periods rather than time limits that expire. That is this page's reading.",
+    "The January 1 and February 1 deadlines in s. 44 (5) are extended under Legislation Act s. 89 (1) when they fall on a Sunday or an s. 88 holiday, to the next day that is neither. The official text, read on 19 November 2026 from e-Laws, says: s. 89 (1) \"Time limits that would otherwise expire on a holiday are extended to include the next day that is not a holiday.\" Section 87 says holiday means a holiday as described in section 88. Section 46 says \"Every provision of this Part applies to every Act and regulation.\" January 1, 2027 becomes Saturday, January 2, 2027. RTA s. 193 and LTB rule 1.14 could be read to reach the next weekday as well, for example Monday, January 4, 2027. The page names that day and does not rely on it. The 60 day and 28 day minimum periods are not extended, because they are minimum notice periods rather than time limits that expire. No court decision on this point is cited. That is the author's reading, not an adjudicated interpretation.",
     "A day fixed as a holiday by proclamation, or an unplanned office closure, is not known ahead."
   ],
   "service_chain": {
@@ -173,7 +178,7 @@
     "weekend": "Saturday and Sunday, named in LTB rule 1.1 itself. These are the only skipped days that do not depend on an assumption.",
     "statutory": "Listed in the Legislation Act, 2006, s. 88 (2), with the extra days in s. 88 (3) (the Monday after a New Year's Day that falls on a Sunday), s. 88 (4) (Canada Day moves to July 2 when July 1 is a Sunday) and s. 88 (5) (the Monday after a Christmas Day on a Saturday, the Tuesday after one on a Sunday). Rule 1.1 does not use the s. 88 list. It counts a weekday as a holiday only if the Board's offices are closed, so each of these is labelled UNKNOWN and counted as a closure. The Board does not publish a closure calendar that this page could find.",
     "assumed": "Civic Holiday. Not on the s. 88 list. Also labelled UNKNOWN and counted as a closure, for the same reason.",
-    "effect": "Every assumed closure can only make the advised send day earlier. When an assumption alone changes the end date, the page says what the date would be if the offices were open.",
+    "effect": "For the weekdays this page lists (the s. 88 holidays and Civic Holiday), counting a day as closed can only make the advised send day earlier. The list does not include every possible closure, such as an in-lieu day when Boxing Day falls on a weekend. When an assumption alone changes the end date, the page says what the date would be if the offices were open.",
     "unknown": "A day fixed by proclamation, or an unplanned office closure, cannot be known ahead. Leave a spare day."
   },
   "n9_scope": "Every field the tenant or representative must complete. The Office Use Only box is left out. The page does not fill in, sign or send the form."

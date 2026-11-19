@@ -108,8 +108,9 @@
 
   // Holidays. LTB Rules of Procedure, rule 1.1: "holiday" means any Saturday, Sunday or other day on which
   // the LTB's offices are closed. The Legislation Act, 2006, s. 88 lists Ontario's statutory holidays.
-  // Civic Holiday is not on the s. 88 list; it is added here on purpose, because counting one extra
-  // holiday can only move a courier date later and the advised send day earlier, never the other way.
+  // Civic Holiday is not on the s. 88 list; it is added here on purpose as a possible Board office
+  // closure. That only covers the weekdays in this list. It does not cover other possible closures,
+  // such as an in-lieu day when Boxing Day falls on a weekend.
   function nthWeekday(y, m, wd, n) { // n-th weekday wd (0 = Sunday) of month m
     const first = make(y, m, 1);
     return addDays(first, (wd - weekday(first) + 7) % 7 + 7 * (n - 1));
@@ -169,6 +170,97 @@
     const h = holidayOn(dt);
     if (!h) return false;
     return h.kind === "statutory" || !(opts && opts.assumed === false);
+  }
+
+  // Canada Post holiday schedule for Ontario. Official 2026 and 2027 dates were copied from
+  // https://www.canadapost-postescanada.ca/cpc/en/support/kb/other-products-services/post-office/find-out-operating-hours-on-holidays.page
+  // read on 19 November 2026, America/Toronto. The page says Canada Post is closed on national,
+  // provincial and territorial holidays, with no collection or delivery of mail on those days, and
+  // "When a holiday falls on a Saturday or Sunday, it may be applied to the next business day."
+  // Family Day is not a Canada Post closure: "Regular mail collection and delivery occurs on
+  // provincial Family Day holidays." Years after 2027 are computed from the same holiday names and
+  // that weekend rule; they are not copied from a published table for those years.
+  const CP_PUBLISHED = {
+    2026: [
+      ["2026-01-01", "New Year's Day"], ["2026-04-03", "Good Friday"], ["2026-04-06", "Easter Monday"],
+      ["2026-05-18", "Victoria Day"], ["2026-07-01", "Canada Day"], ["2026-08-03", "Civic Holiday"],
+      ["2026-09-07", "Labour Day"], ["2026-09-30", "National Day for Truth and Reconciliation"],
+      ["2026-10-12", "Thanksgiving Day"], ["2026-11-11", "Remembrance Day"],
+      ["2026-12-25", "Christmas Day"], ["2026-12-28", "Boxing Day"]
+    ],
+    2027: [
+      ["2027-01-01", "New Year's Day"], ["2027-03-26", "Good Friday"], ["2027-03-29", "Easter Monday"],
+      ["2027-05-24", "Victoria Day"], ["2027-07-01", "Canada Day"], ["2027-08-02", "Civic Holiday"],
+      ["2027-09-06", "Labour Day"], ["2027-09-30", "National Day for Truth and Reconciliation"],
+      ["2027-10-12", "Thanksgiving Day"], ["2027-11-11", "Remembrance Day"],
+      ["2027-12-25", "Christmas Day"], ["2027-12-28", "Boxing Day"]
+    ]
+  };
+  const cpCache = {};
+  function canadaPostHolidaysIn(y) {
+    if (cpCache[y]) return cpCache[y];
+    if (CP_PUBLISHED[y]) {
+      cpCache[y] = CP_PUBLISHED[y].map((row) => ({ date: row[0], name: row[1], source: "Canada Post official holiday schedule, read 19 November 2026", published: true }));
+      return cpCache[y];
+    }
+    const used = {}, list = [];
+    const take = (dt, name) => {
+      list.push({ date: toISO(dt), name: name, source: "Computed from the official holiday names and the weekend rule on the Canada Post schedule page", published: false });
+      used[toISO(dt)] = true;
+      if (isWeekend(dt)) {
+        let d = addDays(dt, weekday(dt) === 6 ? 2 : 1);
+        while (used[toISO(d)] || isWeekend(d)) d = addDays(d, 1);
+        list.push({ date: toISO(d), name: name + " (observed)", source: "Computed from the official holiday names and the weekend rule on the Canada Post schedule page", published: false, calendar: toISO(dt) });
+        used[toISO(d)] = true;
+      }
+    };
+    take(make(y, 1, 1), "New Year's Day");
+    const easter = easterSunday(y);
+    take(addDays(easter, -2), "Good Friday");
+    take(addDays(easter, 1), "Easter Monday");
+    take(addDays(make(y, 5, 25), -(((weekday(make(y, 5, 25)) + 6) % 7) || 7)), "Victoria Day");
+    take(make(y, 7, 1), "Canada Day");
+    take(nthWeekday(y, 8, 1, 1), "Civic Holiday");
+    take(nthWeekday(y, 9, 1, 1), "Labour Day");
+    take(make(y, 9, 30), "National Day for Truth and Reconciliation");
+    take(nthWeekday(y, 10, 1, 2), "Thanksgiving Day");
+    take(make(y, 11, 11), "Remembrance Day");
+    take(make(y, 12, 25), "Christmas Day");
+    take(make(y, 12, 26), "Boxing Day");
+    list.sort((p, q) => (p.date < q.date ? -1 : 1));
+    cpCache[y] = list;
+    return list;
+  }
+  function canadaPostHolidayOn(dt) {
+    const iso = toISO(dt);
+    return canadaPostHolidaysIn(dt.y).find((h) => h.date === iso) || null;
+  }
+  function isCanadaPostClosed(dt) { return isWeekend(dt) || Boolean(canadaPostHolidayOn(dt)); }
+  // A day a renter can actually send: last open collection day on or before the legal last send day.
+  // This does not change when notice legally counts. Mail uses the Canada Post calendar. Courier skips
+  // weekends, the s. 88 list, Civic Holiday, and Canada Post weekday closures such as observed Boxing Day.
+  function lastPracticalSendFor(legal, method) {
+    if (method === "mail") { let w = legal; while (isCanadaPostClosed(w)) w = addDays(w, -1); return w; }
+    if (method === "courier") {
+      let w = legal;
+      while (isWeekend(w) || holidayOn(w) || canadaPostHolidayOn(w)) w = addDays(w, -1);
+      return w;
+    }
+    return legal;
+  }
+  function prettyLong(dt) { return WEEKDAYS[weekday(dt)] + ", " + MONTHS[dt.m - 1] + " " + dt.d + ", " + dt.y; }
+  function sendAdvice(legal, practical, method) {
+    if (cmp(legal, practical) === 0) return null;
+    const cp = canadaPostHolidayOn(legal);
+    if (method === "mail" && (cp || isWeekend(legal))) {
+      const why = cp ? ("Canada Post is closed that day for " + cp.name + ". The official holiday schedule, read on 19 November 2026, says there is no regular collection or delivery of mail on that day.")
+        : ("That last day is a " + WEEKDAYS[weekday(legal)] + ", and Canada Post does not make regular collection or delivery on Saturday or Sunday.");
+      return prettyLong(legal) + " is the last day that would still meet the legal deadline, but " + why + " This page therefore advises mailing by " + prettyLong(practical) + ".";
+    }
+    if (method === "courier") {
+      return prettyLong(legal) + " is the last day that would still meet the legal deadline, but many couriers do not pick up on a weekend or public holiday. This page therefore advises handing it to a courier by " + prettyLong(practical) + ".";
+    }
+    return null;
   }
 
   // How the notice reaches the landlord, and the day it counts as given.
@@ -233,6 +325,11 @@
       const last = lastOrdinaryNoticeDay(term, minDays, kind);
       out.lastNoticeDay = toISO(last);
       out.lastSendDay = toISO(latestSendFor(last, method));
+      const legal = parseISO(out.lastSendDay), practical = lastPracticalSendFor(legal, method);
+      out.lastPracticalSendDay = toISO(practical);
+      out.lastWorkingSendDay = cmp(practical, legal) !== 0 ? toISO(practical) : undefined;
+      const advice = sendAdvice(legal, practical, method);
+      if (advice) out.sendDayNote = advice;
       out.daysOfNotice = daysBetween(notice, term);
       out.usedSpecial = special;
       // When the s. 44 (5) deadline for this end date falls on a holiday, say how far s. 89 (1) extends it.
@@ -245,16 +342,10 @@
         }
       }
       // The same end date by every method, so the difference between methods is visible at once.
-      out.byMethod = ["hand", "mail", "courier", "email"].map((m) => ({ method: m, lastSendDay: toISO(latestSendFor(last, m)) }));
-      // Mail and courier need a pickup or a post office. When the last send day is a weekend or a statutory
-      // holiday, say so and give the last ordinary working day before it.
-      const ls = parseISO(out.lastSendDay);
-      if ((method === "mail" || method === "courier") && isCourierHoliday(ls, { assumed: false })) {
-        let w = ls; while (isCourierHoliday(w)) w = addDays(w, -1);
-        out.lastWorkingSendDay = toISO(w);
-        const h = holidayOn(ls);
-        out.sendDayNote = "That last day is a " + (h && h.kind === "statutory" ? h.name : (weekday(ls) === 6 ? "Saturday" : "Sunday")) + ". Many post offices and couriers are closed or do not pick up then, so plan to send it by " + WEEKDAYS[weekday(w)] + ", " + MONTHS[w.m - 1] + " " + w.d + ", " + w.y + ".";
-      }
+      out.byMethod = ["hand", "mail", "courier", "email"].map((m) => {
+        const Lday = latestSendFor(last, m), Pday = lastPracticalSendFor(Lday, m);
+        return { method: m, lastSendDay: toISO(Lday), lastPracticalSendDay: toISO(Pday) };
+      });
       return out;
     }
     // Extras that need a finished result: what one late day costs, and whether an assumed closure moved the date.
@@ -362,7 +453,7 @@
       { page: 3, field: "Signature: Tenant or Representative", fill: "Tick the box that applies" },
       { page: 3, field: "First Name, Last Name, Phone Number", fill: "The person signing" },
       { page: 3, field: "Signature and Date (dd/mm/yyyy)", fill: "Sign and date the form" },
-      { page: 0, field: (out.delivery === "hand" ? "Give" : "Send") + " it by", fill: n9Date(out.lastSendDay) + " (" + DELIVERY[out.delivery].label + ")" }
+      { page: 0, field: (out.delivery === "hand" ? "Give" : "Send") + " it by", fill: n9Date(out.lastPracticalSendDay || out.lastSendDay) + " (" + DELIVERY[out.delivery].label + (out.lastPracticalSendDay && out.lastPracticalSendDay !== out.lastSendDay ? "; legal limit " + n9Date(out.lastSendDay) : "") + ")" }
     ];
   }
 
@@ -390,7 +481,7 @@
     pad, make, toISO, parseISO, addDays, weekday, lastDayOfMonth, daysInMonth, daysBetween,
     isLastDayOfFebruary, isLastDayOfMarch, periodEndOnOrAfter, lastOrdinaryNoticeDay, isTermValid,
     earliestMonthly, earliestWeekly, earliestDaily, deemedGiven, latestSendFor, DELIVERY, compute, reminderICS, cmp,
-    holidaysIn, holidayOn, isCourierHoliday, isLegislationHoliday, s89Extend, rule114Extend, specialDeadline, courierSkipped, easterSunday, n9Checklist, n9Date, monthsBetween
+    holidaysIn, holidayOn, isCourierHoliday, isLegislationHoliday, s89Extend, rule114Extend, specialDeadline, courierSkipped, easterSunday, n9Checklist, n9Date, monthsBetween, canadaPostHolidaysIn, canadaPostHolidayOn, isCanadaPostClosed, lastPracticalSendFor, prettyLong
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   root.LeaseDates = api;

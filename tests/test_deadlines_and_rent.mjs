@@ -58,8 +58,8 @@ eq("no extension object for an ordinary january end", M("2026-11-19").deadlineEx
 eq("60 day minimum not extended", [M("2026-12-02").termination, M("2026-12-03").termination], ["2027-01-31", "2027-02-28"]);
 
 // UI text: the extension note, the rule 1.14 limit, UNKNOWN closure labels, decision sentence, Why this date.
-eq("app explains s. 89 (1)", app.includes("s. 89 (1) extends a time limit"), true);
-eq("app says it does not rely on rule 1.14", app.includes("This page does not rely on that later day"), true);
+eq("app explains s. 89 (1)", app.includes("Time limits that would otherwise expire on a holiday are extended to include the next day that is not a holiday"), true);
+eq("app says it does not rely on rule 1.14", app.includes("does not rely on it, because it is not clear the Board"), true);
 eq("app says minimum periods are not extended", app.includes("minimum periods are not extended"), true);
 eq("closures labelled UNKNOWN", (app.match(/UNKNOWN, counted as closed/g) || []).length, 2);
 eq("weekends labelled VERIFIED", app.includes("VERIFIED: Saturday or Sunday"), true);
@@ -82,6 +82,27 @@ const fx = L.compute({ noticeDate: "2026-11-19", kind: "fixed", dueDay: 1, expir
 eq("fixed term late cost via monthly fallback", [fx.lateCost.viaFallback, fx.lateCost.termination], [true, "2027-04-30"]);
 eq("late note cites s. 16 duty to minimize losses", app.includes("s. 16 of the Act"), true);
 eq("late note names the unit, not always a month", app.includes("rent per week") && app.includes("rent per day"), true);
+
+
+// Canada Post closure calendar and a practical send-by day, separate from the legal limit.
+eq("Canada Post closed Christmas 2026", L.canadaPostHolidayOn(D("2026-12-25")).name, "Christmas Day");
+eq("Canada Post closed Boxing Day observed 2026", [L.canadaPostHolidayOn(D("2026-12-28")).name, L.canadaPostHolidayOn(D("2026-12-28")).published], ["Boxing Day", true]);
+eq("Canada Post closed New Year's Day 2027", L.canadaPostHolidayOn(D("2027-01-01")).name, "New Year's Day");
+eq("Canada Post closed Boxing Day observed 2027", L.canadaPostHolidayOn(D("2027-12-28")).name, "Boxing Day");
+eq("Family Day is not a Canada Post closure", L.canadaPostHolidayOn(D("2026-02-16")), null);
+eq("Canada Post closed on Saturdays", L.isCanadaPostClosed(D("2026-12-26")), true);
+const mail28 = M("2026-11-28", { delivery: "mail" });
+eq("legal mail day stays December 28", mail28.lastSendDay, "2026-12-28");
+eq("practical mail day is December 24", mail28.lastPracticalSendDay, "2026-12-24");
+eq("mail note names Boxing Day and no collection", mail28.sendDayNote.includes("Boxing Day") && mail28.sendDayNote.includes("no regular collection") && mail28.sendDayNote.includes("Thursday, December 24, 2026"), true);
+eq("mailing on December 24 still reaches February 28", M("2026-12-24", { delivery: "mail" }).termination, "2027-02-28");
+eq("mailing on December 29 misses February", M("2026-12-29", { delivery: "mail" }).termination, "2027-03-31");
+eq("decision sentence uses the practical day with a weekday", app.includes("prettyLong(advisedDay(out))") && app.includes('id="legal-limit"'), true);
+eq("deadline note quotes s. 89 (1)", app.includes("Time limits that would otherwise expire on a holiday are extended to include the next day that is not a holiday") && app.includes("Every provision of this Part applies to every Act and regulation") && app.includes("not an adjudicated interpretation"), true);
+eq("UNKNOWN claim is limited to listed weekdays", app.includes("For those listed weekdays") && app.includes("The list does not include every possible closure") && app.includes("Monday, December 28 is not skipped here for courier service"), true);
+const cou = L.compute({ noticeDate: "2026-12-31", kind: "monthly", dueDay: 1, delivery: "courier" });
+eq("courier legal day can be a Sunday", [cou.lastSendDay, cou.lastPracticalSendDay], ["2027-01-31", "2027-01-29"]);
+eq("every-method line shows the practical mail day", mail28.byMethod.find((x) => x.method === "mail").lastPracticalSendDay, "2026-12-24");
 
 if (failed) { console.error(failed + " failed"); process.exit(1); }
 console.log("deadline, closure and rent tests: " + passed + " passed");

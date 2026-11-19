@@ -1,4 +1,4 @@
-// Round 3 checks: statutory holidays kept apart from assumed office closures, the one late day cost,
+// Statutory holidays kept apart from assumed office closures, the one late day cost,
 // the service chain from RTA s. 191 (1) (g) to LTB rules 3.1, 3.5 and 3.9, and the Form N9 wording.
 import { createRequire } from "module";
 import { fileURLToPath } from "url";
@@ -90,14 +90,15 @@ eq("rent field on the page", page.includes('id="rent"') && page.includes("(optio
 
 // Self walkthrough fix: a last send day on a weekend or statutory holiday gets the last working day.
 eq("courier last send day sunday", [dec31.lastSendDay, dec31.lastWorkingSendDay], ["2027-01-31", "2027-01-29"]);
-// Fourth revision: with the s. 89 (1) extension the February deadline reaches January 2, 2027, so the last mail day
-// is Monday, December 28, 2026, a working day, instead of Sunday, December 27 with a working day of December 24.
+// The s. 89 (1) extension makes the last legal mail day Monday, December 28, 2026, but Canada Post is closed
+// that day (Boxing Day observed). The advised send day is Thursday, December 24, 2026.
 { const r = L.compute({ noticeDate: "2026-11-28", kind: "monthly", dueDay: 1, delivery: "mail" });
-  eq("mail last send day over christmas", [r.lastSendDay, r.lastWorkingSendDay], ["2026-12-28", undefined]); }
+  eq("mail last send day over christmas", [r.lastSendDay, r.lastWorkingSendDay, r.lastPracticalSendDay], ["2026-12-28", "2026-12-24", "2026-12-24"]);
+  eq("mail note names Boxing Day and December 24", /Boxing Day/.test(r.sendDayNote) && r.sendDayNote.includes("Thursday, December 24, 2026"), true); }
 eq("weekday last send day has no note", L.compute({ noticeDate: "2026-11-19", kind: "monthly", dueDay: 1, delivery: "mail" }).sendDayNote, undefined);
 eq("hand delivery on a sunday has no note", L.compute({ noticeDate: "2027-01-01", kind: "monthly", dueDay: 1, delivery: "hand" }).sendDayNote, undefined);
 eq("checklist due line kept out of the numbered fields", app.includes("items.filter((it) => it.page)") && app.includes("n9-due"), true);
 eq("chain quotes rule 3.1 pieces separately", rules.service_chain.links.find((l) => l.from === "LTB rule 3.1").text.startsWith('"courier to party\'s address" and'), true);
 
 if (failed) { console.error(failed + " failed"); process.exit(1); }
-console.log("round 3 tests: " + passed + " passed");
+console.log("statutory service and N9 tests: " + passed + " passed");

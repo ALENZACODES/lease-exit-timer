@@ -1,5 +1,4 @@
-// Round 2 checks: Ontario holidays for courier timing, the email consent guard, fixed term entry,
-// and the Form N9 checklist shown beside the date.
+// Courier holidays, the email consent guard, fixed term entry, and the Form N9 checklist shown beside the date.
 import { createRequire } from "module";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -97,4 +96,4 @@ eq("rules cite the email consent form", rules.sources.some((s) => s.url.includes
 eq("rules cite s. 47", rules.sources[0].name.includes("47"), true);
 
 if (failed) { console.error(failed + " failed, " + passed + " passed"); process.exit(1); }
-console.log("round 2 tests: " + passed + " passed");
+console.log("courier, email and N9 tests: " + passed + " passed");
