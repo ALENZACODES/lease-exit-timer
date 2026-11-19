@@ -27,7 +27,7 @@ eq("hand last send", hand.lastSendDay, "2026-12-02");
 eq("hand 60 days counted", hand.daysOfNotice, 64);
 
 // Email counts on the day it is sent.
-const em = L.compute({ noticeDate: "2026-12-02", kind: "monthly", dueDay: 1, delivery: "email" });
+const em = L.compute({ noticeDate: "2026-12-02", kind: "monthly", dueDay: 1, delivery: "email", emailConsent: true, emailCoversNotice: true });
 eq("email same day", em.notice, "2026-12-02");
 eq("email exactly 60 days", em.daysOfNotice, 60);
 eq("email term", em.termination, "2027-01-31");

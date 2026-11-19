@@ -1,6 +1,6 @@
 // Lease Exit Timer date engine. Pure functions, no DOM, so the same file runs in the browser and in Node tests.
-// Rules: Residential Tenancies Act, 2006, ss. 38, 44, 47 and 191 (3); Legislation Act, 2006, s. 89 (3);
-// Landlord and Tenant Board Rules of Procedure, rules 3.1 and 3.9; official Form N9 instructions.
+// Rules: Residential Tenancies Act, 2006, ss. 38, 44, 47 and 191 (3); Legislation Act, 2006, ss. 87, 88 and 89 (3);
+// Landlord and Tenant Board Rules of Procedure, rules 1.1, 3.1, 3.5 and 3.9; official Form N9 instructions.
 (function (root) {
   "use strict";
   const DAY = 86400000;
@@ -90,27 +90,82 @@
   }
   function earliestDaily(notice, minDays) { return { t: addDays(notice, minDays), special: false }; }
 
+  // Holidays. LTB Rules of Procedure, rule 1.1: "holiday" means any Saturday, Sunday or other day on which
+  // the LTB's offices are closed. The Legislation Act, 2006, s. 88 lists Ontario's statutory holidays.
+  // Civic Holiday is not on the s. 88 list; it is added here on purpose, because counting one extra
+  // holiday can only move a courier date later and the advised send day earlier, never the other way.
+  function nthWeekday(y, m, wd, n) { // n-th weekday wd (0 = Sunday) of month m
+    const first = make(y, m, 1);
+    return addDays(first, (wd - weekday(first) + 7) % 7 + 7 * (n - 1));
+  }
+  function easterSunday(y) { // Anonymous Gregorian algorithm
+    const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4;
+    const f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30;
+    const i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7;
+    const m = Math.floor((a + 11 * h + 22 * l) / 451), month = Math.floor((h + l - 7 * m + 114) / 31);
+    return make(y, month, ((h + l - 7 * m + 114) % 31) + 1);
+  }
+  const holidayCache = {};
+  function holidaysIn(y) {
+    if (holidayCache[y]) return holidayCache[y];
+    const list = [];
+    const add = (dt, name, source) => list.push({ date: toISO(dt), name: name, source: source });
+    const S88 = "Legislation Act, 2006, s. 88 (2)";
+    const jan1 = make(y, 1, 1);
+    add(jan1, "New Year's Day", S88);
+    if (weekday(jan1) === 0) add(make(y, 1, 2), "Day after New Year's Day", "Legislation Act, 2006, s. 88 (3)");
+    add(nthWeekday(y, 2, 1, 3), "Family Day", S88);
+    const easter = easterSunday(y);
+    add(addDays(easter, -2), "Good Friday", S88);
+    add(addDays(easter, 1), "Easter Monday", S88);
+    add(addDays(make(y, 5, 25), -(((weekday(make(y, 5, 25)) + 6) % 7) || 7)), "Victoria Day", S88);
+    add(weekday(make(y, 7, 1)) === 0 ? make(y, 7, 2) : make(y, 7, 1), "Canada Day", weekday(make(y, 7, 1)) === 0 ? "Legislation Act, 2006, s. 88 (4)" : S88);
+    add(nthWeekday(y, 8, 1, 1), "Civic Holiday", "Added to be safe; not on the s. 88 list");
+    add(nthWeekday(y, 9, 1, 1), "Labour Day", S88);
+    add(nthWeekday(y, 10, 1, 2), "Thanksgiving Day", S88);
+    add(make(y, 11, 11), "Remembrance Day", S88);
+    const xmas = make(y, 12, 25);
+    add(xmas, "Christmas Day", S88);
+    add(make(y, 12, 26), "Boxing Day", S88);
+    if (weekday(xmas) === 6) add(make(y, 12, 27), "Monday after Christmas Day", "Legislation Act, 2006, s. 88 (5)");
+    if (weekday(xmas) === 0) add(make(y, 12, 27), "Tuesday after Christmas Day", "Legislation Act, 2006, s. 88 (5)");
+    list.sort((p, q) => (p.date < q.date ? -1 : 1));
+    holidayCache[y] = list;
+    return list;
+  }
+  function holidayOn(dt) { const iso = toISO(dt); return holidaysIn(dt.y).find((h) => h.date === iso) || null; }
+  function isWeekend(dt) { const w = weekday(dt); return w === 0 || w === 6; }
+  function isCourierHoliday(dt) { return isWeekend(dt) || holidayOn(dt) !== null; }
+
   // How the notice reaches the landlord, and the day it counts as given.
   const DELIVERY = {
     hand: { label: "By hand, or left in the landlord's mail box", lag: "same day" },
-    email: { label: "By email, only if the landlord agreed in writing to email", lag: "same day" },
-    courier: { label: "By courier", lag: "next day" },
+    email: { label: "By email, only if the landlord's written consent covers this notice", lag: "same day" },
+    courier: { label: "By courier", lag: "next day that is not a holiday" },
     mail: { label: "By mail (Canada Post)", lag: "fifth day" }
   };
-  function isWeekend(dt) { const w = weekday(dt); return w === 0 || w === 6; }
   function deemedGiven(sent, method) {
     if (method === "mail") return addDays(sent, 5); // RTA s. 191 (3)
-    if (method === "courier") { // LTB Rules 3.9: day after, or the next day that is not a holiday
+    if (method === "courier") { // LTB Rules 3.9: day after, or if that is a holiday the next day that is not
       let d = addDays(sent, 1);
-      while (isWeekend(d)) d = addDays(d, 1);
+      while (isCourierHoliday(d)) d = addDays(d, 1);
       return d;
     }
     return sent; // hand, mail box, email: the day it is given or sent
   }
+  // Days a courier date was moved past, so the page can say why.
+  function courierSkipped(sent) {
+    const out = [];
+    for (let d = addDays(sent, 1); isCourierHoliday(d); d = addDays(d, 1)) {
+      const h = holidayOn(d);
+      out.push({ date: toISO(d), name: h ? h.name : (weekday(d) === 6 ? "Saturday" : "Sunday"), source: h ? h.source : "LTB Rules, rule 1.1" });
+    }
+    return out;
+  }
   function latestSendFor(deadline, method) {
     // Walk back from the deadline to the last send day whose deemed day is still on time.
     let d = deadline;
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 15; i++) {
       if (lte(deemedGiven(d, method), deadline)) return d;
       d = addDays(d, -1);
     }
@@ -123,9 +178,13 @@
     const kind = input.kind || "monthly";
     if (!["monthly", "fixed", "weekly", "daily"].includes(kind)) return { error: "Choose a kind of tenancy." };
     const method = DELIVERY[input.delivery] ? input.delivery : "hand";
+    if (method === "email" && !(input.emailConsent === true && input.emailCoversNotice === true)) {
+      return { error: "Email counts only with the landlord's written consent to service by email (LTB rule 3.5), and that consent has to cover a tenant's notice to end the tenancy. Tick both boxes only if that is true, or choose another delivery method.", needsEmailConsent: true };
+    }
     const notice = deemedGiven(sent, method);
     const minDays = minDaysFor(kind);
-    const out = { sent: toISO(sent), notice: toISO(notice), delivery: method, kind: kind, minDays: minDays };
+    const out = { sent: toISO(sent), notice: toISO(notice), delivery: method, kind: kind, minDays: minDays, notes: [] };
+    if (method === "courier") out.courierSkipped = courierSkipped(sent);
 
     function finish(term, special) {
       out.termination = toISO(term);
@@ -138,9 +197,18 @@
     }
 
     if (kind === "fixed") {
+      if (!String(input.expiryDate || "").trim()) return { error: "Enter the last day of the fixed term. It is the end date written in your lease, for example August 31, 2027 for a one year lease that began on September 1, 2026.", field: "expiry" };
       const expiry = parseISO(input.expiryDate);
-      if (!expiry) return { error: "Enter the last day of the fixed term." };
-      if (cmp(expiry, notice) <= 0) return { error: "The fixed term has already ended on that date. After a fixed term ends the tenancy usually continues month to month, so choose Monthly." };
+      if (!expiry) return { error: "The fixed term end date is not a real calendar date. Check the day and month.", field: "expiry" };
+      if (cmp(expiry, notice) <= 0) return { error: "The fixed term has already ended on the day this notice would count. After a fixed term ends the tenancy usually continues month to month (s. 38 (1)), so choose Monthly.", field: "expiry" };
+      if (daysBetween(notice, expiry) > 3660) return { error: "That fixed term ends more than ten years after the notice. Check the year in the end date.", field: "expiry" };
+      const dueForCheck = Number(input.dueDay);
+      if (Number.isInteger(dueForCheck) && dueForCheck >= 1 && dueForCheck <= 31) {
+        const nextDue = addDays(expiry, 1);
+        if (nextDue.d !== Math.min(dueForCheck, daysInMonth(nextDue.y, nextDue.m))) {
+          out.notes.push("This end date is not the day before your rent day. Most leases end the day before rent would next be due. Check the end date written in your lease before you use it on Form N9.");
+        }
+      }
       const check = isTermValid(notice, expiry, minDays, "fixed");
       finish(expiry, check.usedSpecial);
       out.valid = check.ok;
@@ -183,6 +251,22 @@
     return out;
   }
 
+  // Form N9 (v. 01/04/2022) fields, in the order they appear on the form, with the computed date filled in.
+  function n9Date(iso) { const d = parseISO(iso); return d ? pad(d.d) + "/" + pad(d.m) + "/" + d.y : ""; }
+  function n9Checklist(out) {
+    if (!out || !out.valid) return [];
+    return [
+      { page: 1, field: "To: (Landlord's name)", fill: "Your landlord's name as it appears on the lease" },
+      { page: 1, field: "From: (Tenant's name)", fill: "Include all tenant names" },
+      { page: 1, field: "Address of the Rental Unit", fill: "Full address, including the unit number" },
+      { page: 1, field: "The last day of my tenancy will be (dd/mm/yyyy)", fill: n9Date(out.termination) },
+      { page: 3, field: "Signature: Tenant or Representative", fill: "Tick the box that applies" },
+      { page: 3, field: "First Name, Last Name, Phone Number", fill: "The person signing" },
+      { page: 3, field: "Signature and Date (dd/mm/yyyy)", fill: "Sign and date the form" },
+      { page: 0, field: (out.delivery === "hand" ? "Give" : "Send") + " it by", fill: n9Date(out.lastSendDay) + " (" + DELIVERY[out.delivery].label + ")" }
+    ];
+  }
+
   // A small calendar file so the last send day lands in the renter's own calendar.
   function reminderICS(out, stamp) {
     if (!out || !out.valid) return "";
@@ -206,7 +290,8 @@
   const api = {
     pad, make, toISO, parseISO, addDays, weekday, lastDayOfMonth, daysInMonth, daysBetween,
     isLastDayOfFebruary, isLastDayOfMarch, periodEndOnOrAfter, lastOrdinaryNoticeDay, isTermValid,
-    earliestMonthly, earliestWeekly, earliestDaily, deemedGiven, latestSendFor, DELIVERY, compute, reminderICS, cmp
+    earliestMonthly, earliestWeekly, earliestDaily, deemedGiven, latestSendFor, DELIVERY, compute, reminderICS, cmp,
+    holidaysIn, holidayOn, isCourierHoliday, courierSkipped, easterSunday, n9Checklist, n9Date
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   root.LeaseDates = api;

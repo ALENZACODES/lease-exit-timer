@@ -24,8 +24,8 @@ function toggleRows() {
   $("delivery-hint").textContent = {
     hand: "Hand it to the landlord or an authorized employee, or leave it where the landlord receives mail.",
     mail: "The date that counts is the fifth day after mailing, not the day you put it in the post.",
-    courier: "Rule 3.9 moves the next day past a holiday. Weekends are handled here. Check any other holiday yourself.",
-    email: "A courtesy email is not automatically valid notice. The landlord must have agreed in writing to service by email."
+    courier: "Rule 3.9 counts the day after hand off, or the next day that is not a holiday. Weekends and Ontario holidays are counted here.",
+    email: "Email is valid service only with the landlord's written consent (LTB rule 3.5), and that consent should clearly cover a notice to end the tenancy."
   }[m];
 }
 function draftText(out) {
@@ -61,9 +61,14 @@ function render(out) {
     ? '<p class="flag">TOO LATE FOR THIS FIXED TERM</p><h3 class="date late">' + pretty(out.termination) + '</h3>'
     : '<p class="flag">' + label + '</p><h3 class="date">' + pretty(out.termination) + '</h3>';
   html += '<p>' + out.message + '</p>';
+  (out.notes || []).forEach((n) => { html += '<p class="note">' + n + '</p>'; });
   if (!late) {
     html += '<div class="deadline"><span>LAST DAY TO ' + (out.delivery === "hand" ? "GIVE" : "SEND") + ' IT THIS WAY</span><strong>' + pretty(out.lastSendDay) + '</strong><small>For notice that counts by ' + pretty(out.lastNoticeDay) + '</small></div>';
     html += '<ol class="timeline">' + steps.map((s) => '<li><span>' + s[0] + '</span><strong>' + s[1] + '</strong></li>').join("") + '</ol>';
+    if (out.delivery === "courier" && out.courierSkipped && out.courierSkipped.length) html += '<p class="source-note">Courier date moved past ' + out.courierSkipped.map((h) => pretty(h.date) + ' (' + h.name + ')').join(", ") + '. LTB rule 3.9, with holidays from rule 1.1 and the Legislation Act, 2006, s. 88.</p>';
+    if (out.delivery === "email") html += '<p class="note">Put your name and phone number in the email, attach the signed Form N9, and keep a copy of the sent email and of the written consent.</p>';
+    const items = L.n9Checklist(out);
+    html += '<div class="n9" id="n9-checklist"><p class="flag">FORM N9 CHECKLIST</p><p class="hint">Fill these in on the official form. The courtesy note further down is not Form N9 and does not give notice.</p><ol>' + items.map((it) => '<li><span>' + (it.page ? 'Page ' + it.page + ' · ' : '') + it.field + '</span><strong>' + it.fill + '</strong></li>').join("") + '</ol></div>';
     if (out.usedSpecial) html += '<p class="source-note">Section 44 (5) treats notice by January 1 for the end of February, or by February 1 for the end of March, as at least 60 days.</p>';
     if (Number($("due").value) > 28 && (out.kind === "monthly" || out.kind === "fixed")) html += '<p class="note">Your rent day is 29, 30 or 31. This calculation assumes rent is due on the last day in months without that date. Confirm the rental period in your agreement before using this result.</p>';
   } else {
@@ -78,11 +83,9 @@ function render(out) {
 }
 function run() {
   toggleRows();
-  if (method() === "email" && !$("email-consent").checked) {
-    render({ error: "Email needs the landlord's written consent. Tick the confirmation only if you have that consent, or choose another delivery method." });
-    return;
-  }
-  render(L.compute({ noticeDate: $("notice").value, kind: $("kind").value, dueDay: $("due").value, expiryDate: $("expiry").value, payWeekday: $("payday").value, delivery: method() }));
+  const out = L.compute({ noticeDate: $("notice").value, kind: $("kind").value, dueDay: $("due").value, expiryDate: $("expiry").value, payWeekday: $("payday").value, delivery: method(), emailConsent: $("email-consent").checked, emailCoversNotice: $("email-covers").checked });
+  $("expiry").setAttribute("aria-invalid", String(out.field === "expiry"));
+  render(out);
 }
 function download(filename, text, type) {
   const url = URL.createObjectURL(new Blob([text], { type: type }));
@@ -92,13 +95,14 @@ function download(filename, text, type) {
 const examples = {
   ordinary: { date: "2026-11-19", kind: "monthly", due: "1", delivery: "hand" },
   mail: { date: "2026-11-28", kind: "monthly", due: "1", delivery: "mail" },
+  courier: { date: "2026-12-31", kind: "monthly", due: "1", delivery: "courier" },
   winter: { date: "2027-01-01", kind: "monthly", due: "1", delivery: "hand" },
   late: { date: "2026-11-19", kind: "fixed", due: "1", expiry: "2026-12-31", delivery: "hand" }
 };
 $("calculator").addEventListener("submit", (e) => { e.preventDefault(); run(); });
 $("kind").addEventListener("change", () => { toggleRows(); run(); });
 for (const el of document.querySelectorAll('input[name="delivery"]')) el.addEventListener("change", () => { toggleRows(); run(); });
-for (const id of ["notice", "due", "expiry", "payday", "email-consent"]) $(id).addEventListener("change", run);
+for (const id of ["notice", "due", "expiry", "payday", "email-consent", "email-covers"]) $(id).addEventListener("change", run);
 for (const id of ["landlord", "tenant", "unit"]) $(id).addEventListener("input", () => { $("draft").textContent = draftText(current); });
 for (const el of document.querySelectorAll("[data-example]")) el.addEventListener("click", () => {
   const x = examples[el.dataset.example];

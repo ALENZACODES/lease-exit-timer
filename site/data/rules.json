@@ -7,12 +7,12 @@
     {
       "name": "Residential Tenancies Act, 2006, S.O. 2006, c. 17, sections 38, 44, 47 and 191",
       "url": "https://www.ontario.ca/laws/statute/06r17",
-      "note": "Official e-Laws text, consolidation from September 21, 2026, read on 2026-11-19, America/Toronto. Section 44 sets the 28 and 60 day periods and the February and March rule. Section 191 (3) says mail counts on the fifth day after mailing. Section 38 (1) turns an ended fixed term into a monthly tenancy."
+      "note": "Official e-Laws text, read on 2026-11-19, America/Toronto. Section 44 sets the 28 and 60 day periods and the February and March rule. Section 47 lets a tenant end a tenancy at the end of a period or term by notice under s. 44. Section 191 (3) says mail counts on the fifth day after mailing. Section 38 (1) turns an ended fixed term into a monthly tenancy."
     },
     {
-      "name": "Legislation Act, 2006, S.O. 2006, c. 21, Sched. F, section 89 (3)",
+      "name": "Legislation Act, 2006, S.O. 2006, c. 21, Sched. F, sections 87, 88 and 89 (3)",
       "url": "https://www.ontario.ca/laws/statute/06l21",
-      "note": "How days are counted: the day notice is given is left out and the termination day is counted, even when a rule says at least. Read on 2026-11-19, America/Toronto."
+      "note": "Section 88 lists Ontario's holidays, used for courier timing. Section 89 (3) says how days are counted: the day notice is given is left out and the termination day is counted, even when a rule says at least. Read on 2026-11-19, America/Toronto."
     },
     {
       "name": "Landlord and Tenant Board, Form N9: Tenant's Notice to End the Tenancy (v. 01/04/2022), important information pages",
@@ -20,9 +20,14 @@
       "note": "PDF returned HTTP 200 on 2026-11-09, America/Toronto."
     },
     {
-      "name": "Landlord and Tenant Board Rules of Procedure, rules 3.1 and 3.9",
+      "name": "Landlord and Tenant Board Rules of Procedure, rules 1.1, 3.1, 3.5 and 3.9",
       "url": "https://tribunalsontario.ca/documents/ltb/Rules/LTB-Rules_of_Procedure.html",
-      "note": "Email works only with written consent. A courier delivery counts the day after hand off, or the next day that is not a holiday. Email and hand delivery count the same day. Read on 2026-11-19, America/Toronto."
+      "note": "Rule 1.1 defines a holiday as any Saturday, Sunday or other day the Board's offices are closed. Rule 3.5 allows service by email only with written consent. Rule 3.9: courier counts the day after hand off, or the next day that is not a holiday; email and hand delivery count the same day. Read on 2026-11-19, America/Toronto."
+    },
+    {
+      "name": "Landlord and Tenant Board, Consent to Service by Email (v. 01/04/2022)",
+      "url": "https://tribunalsontario.ca/documents/ltb/Other%20Forms/Email%20Service%20Consent.pdf",
+      "note": "Lists rent increase notices, landlord entry notices, documents for a Board application and tenancy communication. It does not name a tenant's notice to end the tenancy. Read on 2026-11-19, America/Toronto."
     },
     {
       "name": "Ministry of Municipal Affairs and Housing, A guide to the standard lease for rental housing, part D",
@@ -88,11 +93,11 @@
     "Care-home rules and the 28-day path for tenants who have experienced sexual or domestic violence use different Board forms and are not calculated here. See Tribunals Ontario for those forms."
   ],
   "n9_fields_for_draft": [
-    "Landlord name",
-    "All tenant names",
-    "Rental unit address",
-    "Termination date",
-    "Signature and date on the official form"
+    "To: (Landlord's name)",
+    "From: (Tenant's name), include all tenant names",
+    "Address of the Rental Unit",
+    "The last day of my tenancy will be (dd/mm/yyyy)",
+    "Page 3: Tenant or Representative, first and last name, phone number, signature and date"
   ],
   "delivery_rules": [
     {
@@ -103,15 +108,15 @@
     },
     {
       "id": "email",
-      "label": "By email, only if the landlord agreed in writing",
+      "label": "By email, only if the landlord's written consent covers this notice",
       "deemed": "the same day",
-      "source": "LTB Rules 3.1 and 3.9"
+      "source": "LTB Rules 3.1, 3.5 and 3.9"
     },
     {
       "id": "courier",
       "label": "By courier",
-      "deemed": "the next day, moved past a Saturday or Sunday",
-      "source": "LTB Rules 3.9"
+      "deemed": "the day after hand off, or the next day that is not a holiday (Saturday, Sunday, a Legislation Act s. 88 holiday, or Civic Holiday)",
+      "source": "LTB Rules 1.1 and 3.9; Legislation Act, 2006, s. 88"
     },
     {
       "id": "mail",
@@ -121,5 +126,10 @@
     }
   ],
   "counting_rule": "Days are counted the way the Legislation Act, 2006, s. 89 (3) says: leave out the day notice is given and count the termination day. Notice given on May 1 reaches June 30 with exactly 60 days.",
-  "retrieved_update": "2026-11-19"
+  "retrieved_update": "2026-11-19",
+  "limits": [
+    "Yearly tenancies are not offered.",
+    "Courier and email timing rely on LTB rules 3.1, 3.5 and 3.9, which are written for Board matters.",
+    "A day fixed as a holiday by proclamation, or an unplanned office closure, is not known ahead."
+  ]
 }

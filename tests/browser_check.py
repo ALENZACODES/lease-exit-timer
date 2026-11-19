@@ -10,9 +10,10 @@ from playwright.async_api import async_playwright
 URL = sys.argv[1]
 AXE = sys.argv[2] if len(sys.argv) > 2 else None
 EXPECT = {
-    "ordinary": ["January 31, 2027", "December 2, 2026"],
+    "ordinary": ["January 31, 2027", "December 2, 2026", "FORM N9 CHECKLIST", "31/01/2027", "Include all tenant names"],
     "mail": ["February 28, 2027", "December 27, 2026"],
-    "winter": ["February 28, 2027", "February and March rule"],
+    "winter": ["February 28, 2027", "February and March rule", "FORM N9 CHECKLIST", "28/02/2027"],
+    "courier": ["March 31, 2027", "January 4, 2027", "New Year's Day"],
     "late": ["TOO LATE FOR THIS FIXED TERM", "January 31, 2027"],
 }
 fails = []
@@ -51,8 +52,27 @@ async def main():
                 fails.append(f"{vw[0]} email without consent was not refused")
             await pg.check("#email-consent")
             await pg.wait_for_timeout(150)
+            if "LAST DAY TO SEND" in await pg.locator("#result").inner_text():
+                fails.append(f"{vw[0]} email counted without consent covering the notice")
+            await pg.check("#email-covers")
+            await pg.wait_for_timeout(150)
             if "LAST DAY TO SEND" not in await pg.locator("#result").inner_text():
                 fails.append(f"{vw[0]} email with consent did not count")
+            if AXE:
+                await pg.add_script_tag(path=AXE)
+                v = await pg.evaluate("async()=>(await axe.run(document,{runOnly:['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa','best-practice']})).violations.map(x=>x.id)")
+                if v:
+                    fails.append(f"{vw[0]} email state: axe {v}")
+            # Fixed term with no end date shows a clear error and marks the field.
+            await pg.check('input[name="delivery"][value="hand"]')
+            await pg.select_option("#kind", "fixed")
+            await pg.fill("#expiry", "")
+            await pg.dispatch_event("#expiry", "change")
+            await pg.wait_for_timeout(150)
+            if "end date written in your lease" not in await pg.locator("#result").inner_text():
+                fails.append(f"{vw[0]} empty fixed term end date not explained")
+            if await pg.get_attribute("#expiry", "aria-invalid") != "true":
+                fails.append(f"{vw[0]} empty fixed term end date not marked invalid")
             # No horizontal scroll on small screens.
             sw = await pg.evaluate("document.documentElement.scrollWidth")
             if sw > vw[0] + 1:
@@ -66,4 +86,4 @@ asyncio.run(main())
 if fails:
     print("FAIL\n" + "\n".join(fails))
     sys.exit(1)
-print("browser check passed: 4 examples x 2 screen sizes, keyboard, email consent, layout" + (", axe 0 violations" if AXE else ""))
+print("browser check passed: 5 examples x 2 screen sizes, keyboard, email consent, fixed term entry, layout" + (", axe 0 violations" if AXE else ""))
