@@ -45,11 +45,11 @@ function courierNote(out) {
   const group = (k) => out.courierSkipped.filter((h) => h.kind === k).map((h) => pretty(h.date) + ' (' + h.name + ')');
   const parts = [];
   const wk = group("weekend"), st = group("statutory"), as = group("assumed");
-  if (wk.length) parts.push('Saturday or Sunday, a holiday under LTB rule 1.1 by name: ' + wk.join(", ") + '.');
-  if (st.length) parts.push('Ontario holiday under the Legislation Act, 2006, s. 88, assumed to be a Board office closure: ' + st.join(", ") + '.');
-  if (as.length) parts.push('Not on the s. 88 list, also assumed to be a Board office closure: ' + as.join(", ") + '.');
+  if (wk.length) parts.push('VERIFIED: Saturday or Sunday, a holiday under LTB rule 1.1 by name: ' + wk.join(", ") + '.');
+  if (st.length) parts.push('UNKNOWN, counted as closed: Ontario holiday under the Legislation Act, 2006, s. 88. No Board closure calendar was found for this day: ' + st.join(", ") + '.');
+  if (as.length) parts.push('UNKNOWN, counted as closed: not on the s. 88 list, and no Board closure calendar was found for this day: ' + as.join(", ") + '.');
   let html = '<div class="source-note" id="courier-skipped"><p><strong>Courier date moved past these days (LTB rule 3.9).</strong></p><ul>' + parts.map((t) => '<li>' + t + '</li>').join("") + '</ul>';
-  if (st.length || as.length) html += '<p>Rule 1.1 counts a weekday as a holiday only if the Board\'s offices are closed that day. This page has not checked a Board closure calendar, so each weekday closure is an assumption. An extra closed day can only make the advised day earlier.</p>';
+  if (st.length || as.length) html += '<p id="closure-unknown"><strong>Board closures are UNKNOWN.</strong> Rule 1.1 counts a weekday as a holiday only if the Board\'s offices are closed that day. The Board does not publish a closure calendar that this page could find, so each weekday closure above is marked UNKNOWN and counted as closed. That choice can only make the advised day earlier, never later.</p>';
   const o = out.officeOpen;
   if (o) {
     html += o.changesEnd
@@ -57,6 +57,29 @@ function courierNote(out) {
       : '<p>Even if the Board\'s offices are open on ' + o.days.join(" and ") + ', the end date is the same. The notice would count on ' + pretty(o.notice) + '.</p>';
   }
   return html + '</div>';
+}
+function deadlineNote(out) {
+  const x = out.deadlineExtended;
+  if (!x) return "";
+  return '<p class="source-note" id="deadline-extended"><strong>Holiday extension of the ' + (L.parseISO(x.deadline).m === 1 ? "January 1" : "February 1") + ' deadline.</strong> Section 44 (5) lets notice given by ' + pretty(x.deadline) + ' end the tenancy on ' + pretty(out.termination) + '. That day is a holiday under the Legislation Act, 2006, s. 88, and s. 89 (1) extends a time limit that would expire on a holiday to include the next day that is not a holiday, so this page uses ' + pretty(x.extendedTo) + '. A Saturday is not a holiday under that Act.' +
+    (x.rule114 ? ' LTB rule 1.14, through s. 193 of the Act, could be read to reach ' + pretty(x.rule114) + ', because the Board also treats Saturdays as holidays. This page does not rely on that later day.' : '') +
+    ' The 60 day and 28 day minimum periods are not extended. They are minimum notice periods, not time limits that expire, which is this page\'s reading.</p>';
+}
+function decision(out) {
+  const verb = out.delivery === "hand" ? "Give" : "Send";
+  const how = { hand: "by hand", mail: "by Canada Post", courier: "by courier", email: "by email, with written consent" }[out.delivery];
+  if (!out.valid) return '<p class="decision" id="decision">It is too late to end this fixed term on ' + pretty(out.termination) + ' by notice.</p>';
+  return '<p class="decision" id="decision">' + verb + ' Form N9 ' + how + ' by ' + pretty(out.lastSendDay) + ' to end your tenancy on ' + pretty(out.termination) + '.</p>';
+}
+function whyNote(out) {
+  const reasons = [];
+  if (out.delivery === "mail") reasons.push('Mail counts as given on the fifth day after mailing, s. 191 (3), so notice sent ' + pretty(out.sent) + ' counts on ' + pretty(out.notice) + '.');
+  else if (out.delivery === "courier") reasons.push('Courier counts on the day after hand off, or the next day that is not a holiday, LTB rule 3.9, so it counts on ' + pretty(out.notice) + '.');
+  else if (out.delivery === "email") reasons.push('Email with written consent counts as described in LTB rule 3.5, here on ' + pretty(out.notice) + '.');
+  else reasons.push('Notice given by hand counts on the day you give it, ' + pretty(out.notice) + '.');
+  reasons.push(out.usedSpecial ? 'Section 44 (5) treats notice by January 1 for the end of February, or by February 1 for the end of March, as at least 60 days.' : (out.kind === "weekly" || out.kind === "daily") ? 'Section 44 (1) needs at least 28 days, and the end date must be the last day of a rental period.' : out.kind === "fixed" ? 'Section 44 (4) needs at least 60 days before the expiry date in the agreement, and the notice takes effect on that date.' : 'Section 44 (2) needs at least 60 days, and the end date must be the last day of a rental period.');
+  reasons.push('The earliest end date that meets both is ' + pretty(out.termination) + ', ' + out.daysOfNotice + ' days after notice counts.');
+  return '<details class="why" id="why-this-date"' + (out.deadlineExtended || (out.courierSkipped && out.courierSkipped.length) ? ' open' : '') + '><summary>Why this date</summary><ol>' + reasons.map((r) => '<li>' + r + '</li>').join("") + '</ol>';
 }
 function methodsNote(out) {
   if (!out.byMethod) return "";
@@ -67,7 +90,8 @@ function methodsNote(out) {
 function lateNote(out) {
   const c = out.lateCost;
   const unit = c.periods === 1 ? c.unit : c.unit + "s";
-  return '<p class="note" id="late-cost"><strong>One day late could mean about ' + money(c.amount) + ' more rent.</strong> ' + (out.delivery === "hand" ? "Giving" : "Sending") + ' it on ' + pretty(c.sendDay) + ' instead would make the earliest end date ' + pretty(c.termination) + (c.viaFallback ? ' as a monthly tenancy after the fixed term' : '') + ', ' + c.periods + ' more ' + unit + ' at ' + money(c.rent) + '. This is an estimate from the rent you typed, not a bill. What you actually owe depends on your tenancy, for example if you and your landlord agree in writing to end it on another date.</p>';
+  const per = { week: "rent per week", day: "rent per day", month: "rent per month" }[c.unit];
+  return '<p class="note" id="late-cost"><strong>Missing the last day by one day moves the end date by ' + c.periods + ' ' + unit + ', about ' + money(c.amount) + ' more rent.</strong> ' + (out.delivery === "hand" ? "Giving" : "Sending") + ' it on ' + pretty(c.sendDay) + ' instead would make the earliest end date ' + pretty(c.termination) + (c.viaFallback ? ' as a monthly tenancy after the fixed term' : '') + '. The estimate is ' + c.periods + ' ' + unit + ' times the ' + per + ' you typed, ' + money(c.rent) + '. It is not a bill. If you move out early anyway, s. 16 of the Act gives a landlord who claims rent a duty to take reasonable steps to minimize losses, and you and your landlord can also agree in writing to end on another date.</p>';
 }
 function render(out) {
   current = out;
@@ -87,16 +111,18 @@ function render(out) {
     [out.usedSpecial ? "February and March rule" : "Notice period met", out.daysOfNotice + " days counted"],
     [fixed ? "Fixed term ends" : "Rental period ends", pretty(out.termination)]
   ];
-  let html = late
+  let html = decision(out) + (late
     ? '<p class="flag">TOO LATE FOR THIS FIXED TERM</p><h3 class="date late">' + pretty(out.termination) + '</h3>'
-    : '<p class="flag">' + label + '</p><h3 class="date">' + pretty(out.termination) + '</h3>';
+    : '<p class="flag">' + label + '</p><h3 class="date">' + pretty(out.termination) + '</h3>');
   html += '<p>' + out.message + '</p>';
   (out.notes || []).forEach((n) => { html += '<p class="note">' + n + '</p>'; });
   if (!late) {
     html += '<div class="deadline"><span>LAST DAY TO ' + (out.delivery === "hand" ? "GIVE" : "SEND") + ' IT THIS WAY</span><strong>' + pretty(out.lastSendDay) + '</strong><small>For notice that counts by ' + pretty(out.lastNoticeDay) + '</small></div>';
     html += '<ol class="timeline">' + steps.map((s) => '<li><span>' + s[0] + '</span><strong>' + s[1] + '</strong></li>').join("") + '</ol>';
     if (out.valid) html += methodsNote(out);
+    html += whyNote(out) + deadlineNote(out);
     if (out.delivery === "courier" && out.courierSkipped && out.courierSkipped.length) html += courierNote(out);
+    html += '</details>';
     if (out.lateCost) html += lateNote(out);
     if (out.sendDayNote) html += '<p class="note" id="send-day-note">' + out.sendDayNote + '</p>';
     if (out.delivery === "email") html += '<p class="note">Put your name and phone number in the email, attach the signed Form N9, and keep a copy of the sent email and of the written consent.</p>';

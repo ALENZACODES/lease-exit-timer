@@ -60,11 +60,19 @@
   function nextWeekdayOnOrAfter(minDate, wd) { return addDays(minDate, (wd - weekday(minDate) + 7) % 7); }
 
   // s. 44 (5): applies to monthly, yearly and fixed-term notices, never to daily or weekly ones.
+  // Its two deadlines are fixed dates: "not later than January 1" for the end of February and "February 1"
+  // for the end of March. Legislation Act, 2006, s. 89 (1): "Time limits that would otherwise expire on a
+  // holiday are extended to include the next day that is not a holiday." A holiday there is a Sunday or a
+  // day on the s. 88 list (s. 87), not a Saturday. January 1 is always New Year's Day, so the February
+  // deadline always reaches at least January 2. See specialDeadline().
+  function specialDeadline(term) {
+    const raw = isLastDayOfFebruary(term) ? make(term.y, 1, 1) : isLastDayOfMarch(term) ? make(term.y, 2, 1) : null;
+    return raw ? s89Extend(raw) : null;
+  }
   function specialAllows(notice, term, kind) {
     if (kind === "weekly" || kind === "daily") return false;
-    if (isLastDayOfFebruary(term)) return lte(notice, make(term.y, 1, 1));
-    if (isLastDayOfMarch(term)) return lte(notice, make(term.y, 2, 1));
-    return false;
+    const dl = specialDeadline(term);
+    return dl ? lte(notice, dl) : false;
   }
   function minDaysFor(kind) { return kind === "weekly" || kind === "daily" ? 28 : 60; }
 
@@ -72,8 +80,8 @@
   function lastOrdinaryNoticeDay(term, minDays, kind) {
     const ordinary = addDays(term, -minDays);
     if (kind !== "weekly" && kind !== "daily") {
-      if (isLastDayOfFebruary(term)) { const j = make(term.y, 1, 1); return gte(j, ordinary) ? j : ordinary; }
-      if (isLastDayOfMarch(term)) { const f = make(term.y, 2, 1); return gte(f, ordinary) ? f : ordinary; }
+      const dl = specialDeadline(term);
+      if (dl) return gte(dl, ordinary) ? dl : ordinary;
     }
     return ordinary;
   }
@@ -143,6 +151,12 @@
     holidayCache[y] = list;
     return list;
   }
+  // Legislation Act, 2006, ss. 87 to 89: a holiday is a Sunday or a day on the s. 88 list. Saturdays and
+  // Civic Holiday are not holidays there. s89Extend(d) is d, or the next day that is not such a holiday.
+  function isLegislationHoliday(dt) { const h = holidayOn(dt); return weekday(dt) === 0 || Boolean(h && h.kind === "statutory"); }
+  function s89Extend(dt) { let d = dt; while (isLegislationHoliday(d)) d = addDays(d, 1); return d; }
+  // LTB rule 1.14 reads the same way with the rule 1.1 holidays, which add Saturdays and unknown office closures.
+  function rule114Extend(dt) { let d = dt; while (isCourierHoliday(d)) d = addDays(d, 1); return d; }
   function holidayOn(dt) { const iso = toISO(dt); return holidaysIn(dt.y).find((h) => h.date === iso) || null; }
   function isWeekend(dt) { const w = weekday(dt); return w === 0 || w === 6; }
   // LTB rule 1.1: a holiday is any Saturday, Sunday or other day on which the Board's offices are closed.
@@ -221,6 +235,15 @@
       out.lastSendDay = toISO(latestSendFor(last, method));
       out.daysOfNotice = daysBetween(notice, term);
       out.usedSpecial = special;
+      // When the s. 44 (5) deadline for this end date falls on a holiday, say how far s. 89 (1) extends it.
+      if (kind !== "weekly" && kind !== "daily" && (isLastDayOfFebruary(term) || isLastDayOfMarch(term))) {
+        const raw = isLastDayOfFebruary(term) ? make(term.y, 1, 1) : make(term.y, 2, 1);
+        const ext = s89Extend(raw);
+        if (cmp(ext, raw) !== 0 && cmp(ext, addDays(term, -minDays)) > 0) {
+          const r114 = rule114Extend(raw);
+          out.deadlineExtended = { deadline: toISO(raw), extendedTo: toISO(ext), rule114: cmp(r114, ext) > 0 ? toISO(r114) : null, usedByThisNotice: special && cmp(notice, raw) > 0 };
+        }
+      }
       // The same end date by every method, so the difference between methods is visible at once.
       out.byMethod = ["hand", "mail", "courier", "email"].map((m) => ({ method: m, lastSendDay: toISO(latestSendFor(last, m)) }));
       // Mail and courier need a pickup or a post office. When the last send day is a weekend or a statutory
@@ -367,7 +390,7 @@
     pad, make, toISO, parseISO, addDays, weekday, lastDayOfMonth, daysInMonth, daysBetween,
     isLastDayOfFebruary, isLastDayOfMarch, periodEndOnOrAfter, lastOrdinaryNoticeDay, isTermValid,
     earliestMonthly, earliestWeekly, earliestDaily, deemedGiven, latestSendFor, DELIVERY, compute, reminderICS, cmp,
-    holidaysIn, holidayOn, isCourierHoliday, courierSkipped, easterSunday, n9Checklist, n9Date, monthsBetween
+    holidaysIn, holidayOn, isCourierHoliday, isLegislationHoliday, s89Extend, rule114Extend, specialDeadline, courierSkipped, easterSunday, n9Checklist, n9Date, monthsBetween
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   root.LeaseDates = api;

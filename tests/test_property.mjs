@@ -55,8 +55,10 @@ function legal(notice, t, kind) {
   if (between(notice, t) >= min) return true;
   if (kind === "weekly" || kind === "daily") return false;
   const y = ymd(t)[0];
-  if (lastFeb(t)) return notice <= y + "-01-01";
-  if (lastMar(t)) return notice <= y + "-02-01";
+  // s. 44 (5) deadlines, extended by Legislation Act s. 89 (1) past a Sunday or an s. 88 day (not a Saturday).
+  const ext = (iso) => { while (wd(iso) === 0 || HOLIDAYS[iso] === "s") iso = add(iso, 1); return iso; };
+  if (lastFeb(t)) return notice <= ext(y + "-01-01");
+  if (lastMar(t)) return notice <= ext(y + "-02-01");
   return false;
 }
 function periodEnd(t, kind, due, pay) {

@@ -6,7 +6,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "test": "node tests/test_dates.mjs && node tests/test_delivery.mjs && node tests/test_round2.mjs && node tests/test_round3.mjs && node tests/test_round4.mjs && node tests/test_property.mjs",
+    "test": "node tests/test_dates.mjs && node tests/test_delivery.mjs && node tests/test_round2.mjs && node tests/test_round3.mjs && node tests/test_round4.mjs && node tests/test_deadlines_and_rent.mjs && node tests/test_property.mjs",
     "start": "python3 -m http.server 8080 --directory site"
   }
 }

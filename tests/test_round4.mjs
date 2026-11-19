@@ -81,8 +81,9 @@ eq("each by method day reaches the same end date and the next day does not", sam
 eq("page renders by method line", app.includes('id="by-method"') && app.includes("Same end date, every method."), true);
 
 // The late cost line is an estimate, not a bill.
-eq("late line says could mean", app.includes("One day late could mean about "), true);
-eq("late line says estimate", app.includes("This is an estimate from the rent you typed, not a bill."), true);
+// Reworded in the next revision to name the period unit; see test_deadlines_and_rent.mjs.
+eq("late line says moves the end date", app.includes("Missing the last day by one day moves the end date by "), true);
+eq("late line says not a bill", app.includes("It is not a bill."), true);
 eq("old categorical wording gone", app.includes("One day late costs about"), false);
 eq("mail and ordinary examples use the same rent", (app.match(/rent: "1850"/g) || []).length, 2);
 

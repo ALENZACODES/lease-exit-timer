@@ -28,16 +28,15 @@ eq("nov9 not special", a.usedSpecial, false);
 const b = L.compute({ noticeDate: "2027-01-01", kind: "monthly", dueDay: 1 });
 eq("jan1 term", b.termination, "2027-02-28");
 eq("jan1 special", b.usedSpecial, true);
-eq("jan1 last notice", b.lastNoticeDay, "2027-01-01");
+// The January 1 deadline is New Year's Day, a holiday, so Legislation Act s. 89 (1) extends it to include
+// January 2, 2027 (a Saturday, which is not a holiday under that Act). Changed in the fourth revision: the first
+// version stopped at January 1.
+eq("jan1 last notice", b.lastNoticeDay, "2027-01-02");
 
-// Jan 2 is too late for February, so March 31 (Jan 2 + 60 = Mar 3, period end Mar 31).
-// Wait: special rule for March allows notice no later than Feb 1, so Jan 2 CAN use March 31
-// even without 60 days... March 31 from Jan 2 is more than 60 days actually.
-// Jan 2 + 60 = March 3, period end March 31 is the ordinary path, not needing special.
-// Is there an earlier period end? Feb 28 is not allowed on Jan 2. So March 31 ordinary.
+// Jan 2, 2027 is inside the extended deadline, so it still reaches February 28 under s. 44 (5).
 const c = L.compute({ noticeDate: "2027-01-02", kind: "monthly", dueDay: 1 });
-eq("jan2 term", c.termination, "2027-03-31");
-eq("jan2 special?", c.usedSpecial, false);
+eq("jan2 term", c.termination, "2027-02-28");
+eq("jan2 special?", c.usedSpecial, true);
 
 // Feb 1, 2027 can use March 31 under special rule, which is earlier than Feb 1+60=Apr 2 / Apr 30.
 const d = L.compute({ noticeDate: "2027-02-01", kind: "monthly", dueDay: 1 });

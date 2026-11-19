@@ -10,11 +10,11 @@ from playwright.async_api import async_playwright
 URL = sys.argv[1]
 AXE = sys.argv[2] if len(sys.argv) > 2 else None
 EXPECT = {
-    "ordinary": ["January 31, 2027", "December 2, 2026", "FORM N9 CHECKLIST", "31/01/2027", "Include all tenant names", "Every field the tenant or representative must complete", "One day late could mean about $1,850.00 more rent", "not a bill", "Same end date, every method.", "Canada Post November 27, 2026", "February 28, 2027"],
-    "mail": ["February 28, 2027", "December 27, 2026", "One day late could mean about $1,850.00 more rent"],
-    "winter": ["February 28, 2027", "February and March rule", "FORM N9 CHECKLIST", "28/02/2027"],
-    "courier": ["March 31, 2027", "January 4, 2027", "New Year's Day", "Ontario holiday under the Legislation Act, 2006, s. 88, assumed to be a Board office closure", "Saturday or Sunday, a holiday under LTB rule 1.1 by name", "has not checked a Board closure calendar", "an earlier end date of February 28, 2027", "One day late could mean about $2,100.00 more rent"],
-    "late": ["TOO LATE FOR THIS FIXED TERM", "January 31, 2027"],
+    "ordinary": ["Give Form N9 by hand by December 2, 2026 to end your tenancy on January 31, 2027.", "January 31, 2027", "December 2, 2026", "FORM N9 CHECKLIST", "31/01/2027", "Include all tenant names", "Every field the tenant or representative must complete", "Missing the last day by one day moves the end date by 1 month, about $1,850.00 more rent", "not a bill", "Same end date, every method.", "Canada Post November 27, 2026", "February 28, 2027", "Why this date"],
+    "mail": ["Send Form N9 by Canada Post by December 28, 2026 to end your tenancy on February 28, 2027.", "December 28, 2026", "fifth day after mailing", "Holiday extension of the January 1 deadline", "s. 89 (1) extends", "January 2, 2027", "January 4, 2027", "This page does not rely on that later day", "minimum periods are not extended"],
+    "winter": ["February 28, 2027", "February and March rule", "FORM N9 CHECKLIST", "28/02/2027", "January 2, 2027"],
+    "courier": ["Send Form N9 by courier by January 31, 2027 to end your tenancy on March 31, 2027.", "March 31, 2027", "January 4, 2027", "New Year's Day", "UNKNOWN, counted as closed: Ontario holiday under the Legislation Act, 2006, s. 88", "VERIFIED: Saturday or Sunday, a holiday under LTB rule 1.1 by name", "Board closures are UNKNOWN.", "an earlier end date of February 28, 2027", "about $2,100.00 more rent", "Courier January 31, 2027"],
+    "late": ["It is too late to end this fixed term on December 31, 2026 by notice.", "TOO LATE FOR THIS FIXED TERM", "January 31, 2027"],
 }
 fails = []
 
@@ -81,9 +81,22 @@ async def main():
             await pg.dispatch_event("#notice", "change")
             await pg.wait_for_timeout(150)
             t = await pg.locator("#result").inner_text()
-            for n in ["Not on the s. 88 list, also assumed to be a Board office closure", "Civic Holiday", "November 1, 2027", "an earlier end date of October 1, 2027"]:
+            for n in ["UNKNOWN, counted as closed: not on the s. 88 list", "Civic Holiday", "November 1, 2027", "an earlier end date of October 1, 2027"]:
                 if n not in t:
                     fails.append(f"{vw[0]} civic holiday case: missing {n}")
+            # Weekly rent: the late estimate is one week, not one month.
+            await pg.select_option("#kind", "weekly")
+            await pg.fill("#notice", "2026-11-19")
+            await pg.check('input[name="delivery"][value="hand"]')
+            await pg.fill("#rent", "400")
+            await pg.dispatch_event("#rent", "change")
+            await pg.wait_for_timeout(150)
+            t = await pg.locator("#result").inner_text()
+            for n in ["moves the end date by 1 week, about $400.00 more rent", "rent per week"]:
+                if n not in t:
+                    fails.append(f"{vw[0]} weekly rent: missing {n}")
+            await pg.select_option("#kind", "monthly")
+            await pg.dispatch_event("#kind", "change")
             # A bad rent amount is explained and marked.
             await pg.fill("#rent", "lots")
             await pg.dispatch_event("#rent", "change")
@@ -115,4 +128,4 @@ asyncio.run(main())
 if fails:
     print("FAIL\n" + "\n".join(fails))
     sys.exit(1)
-print("browser check passed: 5 examples x 2 screen sizes, keyboard, email consent, fixed term entry, civic holiday note, rent check, every method line, service chain, layout" + (", axe 0 violations" if AXE else ""))
+print("browser check passed: 5 examples x 2 screen sizes, keyboard, email consent, fixed term entry, civic holiday note, weekly rent, rent check, decision sentence, deadline extension, every method line, service chain, layout" + (", axe 0 violations" if AXE else ""))

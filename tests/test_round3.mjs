@@ -90,7 +90,10 @@ eq("rent field on the page", page.includes('id="rent"') && page.includes("(optio
 
 // Self walkthrough fix: a last send day on a weekend or statutory holiday gets the last working day.
 eq("courier last send day sunday", [dec31.lastSendDay, dec31.lastWorkingSendDay], ["2027-01-31", "2027-01-29"]);
-eq("mail last send day over christmas", L.compute({ noticeDate: "2026-11-28", kind: "monthly", dueDay: 1, delivery: "mail" }).lastWorkingSendDay, "2026-12-24");
+// Fourth revision: with the s. 89 (1) extension the February deadline reaches January 2, 2027, so the last mail day
+// is Monday, December 28, 2026, a working day, instead of Sunday, December 27 with a working day of December 24.
+{ const r = L.compute({ noticeDate: "2026-11-28", kind: "monthly", dueDay: 1, delivery: "mail" });
+  eq("mail last send day over christmas", [r.lastSendDay, r.lastWorkingSendDay], ["2026-12-28", undefined]); }
 eq("weekday last send day has no note", L.compute({ noticeDate: "2026-11-19", kind: "monthly", dueDay: 1, delivery: "mail" }).sendDayNote, undefined);
 eq("hand delivery on a sunday has no note", L.compute({ noticeDate: "2027-01-01", kind: "monthly", dueDay: 1, delivery: "hand" }).sendDayNote, undefined);
 eq("checklist due line kept out of the numbered fields", app.includes("items.filter((it) => it.page)") && app.includes("n9-due"), true);
