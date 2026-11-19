@@ -104,3 +104,5 @@ footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1r
   .deadline { color: #000; background: #fff; border: 2px solid #000; }
   a::after { content: " (" attr(href) ")"; font-size: .8em; }
 }
+.grid > *, .row > * { min-width: 0; }
+.draft, .sources a, .result { overflow-wrap: anywhere; }
