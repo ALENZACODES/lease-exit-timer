@@ -1,113 +1,136 @@
-const kindEl = document.getElementById("kind");
-const resultEl = document.getElementById("result");
-const draftEl = document.getElementById("draft");
-const copyStatus = document.getElementById("copy-status");
-let rules = null;
+/* Lease Exit Timer, John Khan. All work stays in this page. */
+const $ = (id) => document.getElementById(id);
+const L = window.LeaseDates;
+let current = null;
+const NL = String.fromCharCode(10);
 
 function todayISO() {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Toronto",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit"
-  }).formatToParts(new Date());
-  const y = parts.find((p) => p.type === "year").value;
-  const m = parts.find((p) => p.type === "month").value;
-  const d = parts.find((p) => p.type === "day").value;
-  return `${y}-${m}-${d}`;
+  const p = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
+  return ["year", "month", "day"].map((k) => p.find((x) => x.type === k).value).join("-");
 }
-
 function pretty(iso) {
   if (!iso) return "";
-  const [y, m, d] = iso.split("-").map(Number);
-  return new Intl.DateTimeFormat("en-CA", { dateStyle: "long", timeZone: "UTC" }).format(new Date(Date.UTC(y, m - 1, d)));
+  const d = L.parseISO(iso);
+  return new Intl.DateTimeFormat("en-CA", { dateStyle: "long", timeZone: "UTC" }).format(new Date(Date.UTC(d.y, d.m - 1, d.d)));
 }
-
+function method() { return document.querySelector('input[name="delivery"]:checked').value; }
 function toggleRows() {
-  const k = kindEl.value;
-  document.getElementById("monthly-row").hidden = k !== "monthly";
-  document.getElementById("fixed-row").hidden = k !== "fixed";
-  document.getElementById("weekly-row").hidden = k !== "weekly";
+  const k = $("kind").value, m = method();
+  $("monthly-row").hidden = k !== "monthly" && k !== "fixed";
+  $("fixed-row").hidden = k !== "fixed";
+  $("weekly-row").hidden = k !== "weekly";
+  $("email-consent-row").hidden = m !== "email";
+  $("courier-warning").hidden = m !== "courier";
+  $("delivery-hint").textContent = {
+    hand: "Hand it to the landlord or an authorized employee, or leave it where the landlord receives mail.",
+    mail: "The date that counts is the fifth day after mailing, not the day you put it in the post.",
+    courier: "Rule 3.9 moves the next day past a holiday. Weekends are handled here. Check any other holiday yourself.",
+    email: "A courtesy email is not automatically valid notice. The landlord must have agreed in writing to service by email."
+  }[m];
 }
-
 function draftText(out) {
-  const landlord = document.getElementById("landlord").value.trim() || "[landlord name]";
-  const tenant = document.getElementById("tenant").value.trim() || "[tenant name]";
-  const unit = document.getElementById("unit").value.trim() || "[rental unit address]";
-  if (!out || !out.valid) {
-    return "No draft yet. Ordinary notice is not available for the dates entered, or a field is missing.";
-  }
-  return (
-    `To: ${landlord}\n` +
-    `From: ${tenant}\n` +
-    `Address of the rental unit: ${unit}\n\n` +
-    `I am giving notice because I want to move out of the rental unit.\n` +
-    `The last day of my tenancy will be ${pretty(out.termination)}. This is the termination date.\n` +
-    `I will move out of the rental unit on or before the termination date.\n\n` +
-    `I will also complete official Form N9 (Tenant's Notice to End the Tenancy) from Tribunals Ontario and give you that form.\n` +
-    `The form is at https://tribunalsontario.ca/documents/ltb/Notices%20of%20Termination%20%26%20Instructions/N9.pdf\n\n` +
-    `This note is a courtesy copy. The official Board form is the notice.`
-  );
+  if (!out || !out.valid) return "Choose valid ordinary notice dates before making a courtesy note.";
+  return [
+    "To: " + ($("landlord").value.trim() || "[landlord name]"),
+    "From: " + ($("tenant").value.trim() || "[tenant name]"),
+    "Rental unit: " + ($("unit").value.trim() || "[rental unit address]"), "",
+    "I plan to end my tenancy on " + pretty(out.termination) + " and move out on or before that day.", "",
+    "I will complete and give you official Form N9. This message is only a courtesy note, not the official notice.",
+    "Official form: https://tribunalsontario.ca/documents/ltb/Notices%20of%20Termination%20%26%20Instructions/N9.pdf"
+  ].join(NL);
 }
-
 function render(out) {
+  current = out;
+  $("copy-status").textContent = "";
+  $("actions").hidden = !out.valid;
   if (out.error) {
-    resultEl.innerHTML = `<p>${out.error}</p>`;
-    draftEl.textContent = "";
+    $("result").innerHTML = '<div class="error"><strong>Check one detail.</strong><p>' + out.error + '</p></div>';
+    $("draft").textContent = "";
     return;
   }
-  const bits = [];
-  if (out.valid) {
-    bits.push(`<p>If you give notice on <strong>${pretty(out.notice)}</strong>, the earliest ordinary termination date this page can support is <strong>${pretty(out.termination)}</strong>.</p>`);
-    bits.push(`<p>The last day to give ordinary notice for that termination date is <strong>${pretty(out.lastNoticeDay)}</strong>.</p>`);
+  const fixed = out.kind === "fixed";
+  const label = fixed ? "FIXED TERM EXPIRY" : "EARLIEST ORDINARY END DATE";
+  const late = !out.valid;
+  const steps = [
+    ['You ' + (out.delivery === "mail" || out.delivery === "courier" || out.delivery === "email" ? "send" : "give") + ' it', pretty(out.sent)],
+    ['Notice counts as given', pretty(out.notice)],
+    [out.usedSpecial ? "February and March rule" : "Notice period met", out.daysOfNotice + " days counted"],
+    [fixed ? "Fixed term ends" : "Rental period ends", pretty(out.termination)]
+  ];
+  let html = late
+    ? '<p class="flag">TOO LATE FOR THIS FIXED TERM</p><h3 class="date late">' + pretty(out.termination) + '</h3>'
+    : '<p class="flag">' + label + '</p><h3 class="date">' + pretty(out.termination) + '</h3>';
+  html += '<p>' + out.message + '</p>';
+  if (!late) {
+    html += '<div class="deadline"><span>LAST DAY TO ' + (out.delivery === "hand" ? "GIVE" : "SEND") + ' IT THIS WAY</span><strong>' + pretty(out.lastSendDay) + '</strong><small>For notice that counts by ' + pretty(out.lastNoticeDay) + '</small></div>';
+    html += '<ol class="timeline">' + steps.map((s) => '<li><span>' + s[0] + '</span><strong>' + s[1] + '</strong></li>').join("") + '</ol>';
+    if (out.usedSpecial) html += '<p class="source-note">Section 44 (5) treats notice by January 1 for the end of February, or by February 1 for the end of March, as at least 60 days.</p>';
+    if (Number($("due").value) > 28 && (out.kind === "monthly" || out.kind === "fixed")) html += '<p class="note">Your rent day is 29, 30 or 31. This calculation assumes rent is due on the last day in months without that date. Confirm the rental period in your agreement before using this result.</p>';
   } else {
-    bits.push(`<p>Ordinary notice does not reach a valid termination date for the expiry you entered.</p>`);
+    html += '<p>The last day notice could count as given for that expiry was <strong>' + pretty(out.lastNoticeDay) + '</strong>.</p>';
+    if (out.fallback) html += '<div class="fallback"><strong>A later ordinary date to check</strong><h4>' + pretty(out.fallback.termination) + '</h4><p>Under section 38 (1), a fixed term that ends without notice continues as a monthly tenancy. With the rent day entered, this is the next ordinary monthly date to check. It is not an early exit from the fixed term.</p><button id="use-monthly" type="button" class="secondary">Show the monthly plan</button></div>';
   }
-  bits.push(`<p>${out.message}</p>`);
-  resultEl.innerHTML = bits.join("");
-  draftEl.textContent = draftText(out);
+  html += '<a class="official-link" href="https://tribunalsontario.ca/documents/ltb/Notices%20of%20Termination%20%26%20Instructions/N9.pdf">Open official Form N9 <span aria-hidden="true">↗</span></a>';
+  $("result").innerHTML = html;
+  $("draft").textContent = draftText(out);
+  const use = $("use-monthly");
+  if (use) use.addEventListener("click", () => { $("kind").value = "monthly"; toggleRows(); run(); });
 }
-
 function run() {
-  const out = window.LeaseDates.compute({
-    noticeDate: document.getElementById("notice").value,
-    kind: kindEl.value,
-    dueDay: document.getElementById("due").value,
-    expiryDate: document.getElementById("expiry").value,
-    payWeekday: document.getElementById("payday").value
-  });
-  render(out);
-}
-
-async function init() {
-  document.getElementById("notice").value = todayISO();
-  kindEl.addEventListener("change", toggleRows);
-  document.getElementById("run").addEventListener("click", run);
-  ["notice", "kind", "due", "expiry", "payday", "landlord", "tenant", "unit"].forEach((id) => {
-    document.getElementById(id).addEventListener("change", run);
-  });
-  document.getElementById("copy-draft").addEventListener("click", async () => {
-    try {
-      await navigator.clipboard.writeText(draftEl.textContent || "");
-      copyStatus.textContent = "Draft copied.";
-    } catch (err) {
-      copyStatus.textContent = "Copy failed. Select the draft and copy it yourself.";
-    }
-  });
-  const res = await fetch("data/rules.json");
-  if (res.ok) {
-    rules = await res.json();
-    document.getElementById("rules-copy").innerHTML =
-      "<ul class='clean'>" +
-      rules.ordinary_rules.map((r) => `<li><strong>${r.label}.</strong> ${r.summary}</li>`).join("") +
-      `<li><strong>February and March.</strong> ${rules.february_march_rule.summary}</li>` +
-      "</ul>";
-    document.getElementById("source-list").innerHTML = rules.sources
-      .map((s) => `<li><a href="${s.url}">${s.name}</a>. ${s.note}</li>`)
-      .join("");
-  }
   toggleRows();
-  run();
+  if (method() === "email" && !$("email-consent").checked) {
+    render({ error: "Email needs the landlord's written consent. Tick the confirmation only if you have that consent, or choose another delivery method." });
+    return;
+  }
+  render(L.compute({ noticeDate: $("notice").value, kind: $("kind").value, dueDay: $("due").value, expiryDate: $("expiry").value, payWeekday: $("payday").value, delivery: method() }));
 }
-
+function download(filename, text, type) {
+  const url = URL.createObjectURL(new Blob([text], { type: type }));
+  const a = document.createElement("a"); a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+const examples = {
+  ordinary: { date: "2026-11-19", kind: "monthly", due: "1", delivery: "hand" },
+  mail: { date: "2026-11-28", kind: "monthly", due: "1", delivery: "mail" },
+  winter: { date: "2027-01-01", kind: "monthly", due: "1", delivery: "hand" },
+  late: { date: "2026-11-19", kind: "fixed", due: "1", expiry: "2026-12-31", delivery: "hand" }
+};
+$("calculator").addEventListener("submit", (e) => { e.preventDefault(); run(); });
+$("kind").addEventListener("change", () => { toggleRows(); run(); });
+for (const el of document.querySelectorAll('input[name="delivery"]')) el.addEventListener("change", () => { toggleRows(); run(); });
+for (const id of ["notice", "due", "expiry", "payday", "email-consent"]) $(id).addEventListener("change", run);
+for (const id of ["landlord", "tenant", "unit"]) $(id).addEventListener("input", () => { $("draft").textContent = draftText(current); });
+for (const el of document.querySelectorAll("[data-example]")) el.addEventListener("click", () => {
+  const x = examples[el.dataset.example];
+  $("notice").value = x.date; $("kind").value = x.kind; $("due").value = x.due; $("expiry").value = x.expiry || "";
+  document.querySelector('input[name="delivery"][value="' + x.delivery + '"]').checked = true;
+  toggleRows(); run();
+  document.querySelectorAll("[data-example]").forEach((b) => b.setAttribute("aria-pressed", String(b === el)));
+});
+$("calendar").addEventListener("click", () => {
+  if (!current || !current.valid) return;
+  const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  download("lease-exit-reminder.ics", L.reminderICS(current, stamp), "text/calendar;charset=utf-8");
+});
+$("print").addEventListener("click", () => window.print());
+$("copy-draft").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText($("draft").textContent || ""); $("copy-status").textContent = "Courtesy note copied. Remember to complete official Form N9."; }
+  catch (e) { $("copy-status").textContent = "Copy is unavailable here. Select the note and copy it yourself."; }
+});
+async function init() {
+  $("notice").value = todayISO();
+  $("expiry").value = "2026-12-31";
+  toggleRows(); run();
+  try {
+    const res = await fetch("data/rules.json");
+    if (!res.ok) throw new Error("source file");
+    const r = await res.json();
+    $("rules-copy").innerHTML = '<ul class="clean">' + r.ordinary_rules.map((v) => '<li><strong>' + v.label + '.</strong> ' + v.summary + '</li>').join("") + '<li><strong>February and March.</strong> ' + r.february_march_rule.summary + '</li></ul><p>' + r.counting_rule + '</p>';
+    $("exceptions-copy").innerHTML = '<ul>' + r.exceptions_not_calculated.map((s) => '<li>' + s + '</li>').join("") + '</ul>';
+    $("source-list").innerHTML = r.sources.map((s) => '<li><a href="' + s.url + '">' + s.name + '</a><p>' + s.note + '</p></li>').join("");
+  } catch (e) {
+    $("rules-copy").textContent = "The source list could not load. Open official Form N9 above to read the notice rules before using this result.";
+    $("source-list").innerHTML = '<li><a href="https://tribunalsontario.ca/ltb/">Tribunals Ontario, Landlord and Tenant Board</a></li>';
+  }
+}
 init();
