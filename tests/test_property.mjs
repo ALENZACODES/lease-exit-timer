@@ -70,14 +70,14 @@ function periodEnd(t, kind, due, pay) {
   const [y, m, d] = ymd(add(t, 1));
   return d === Math.min(due, dim(y, m));
 }
-function earliest(notice, kind, due, pay) {
-  for (let t = add(notice, 1), i = 0; i < 200; i++, t = add(t, 1)) if (periodEnd(t, kind, due, pay) && legal(notice, t, kind)) return t;
+function earliest(notice, kind, due, pay, literal = false) {
+  for (let t = add(notice, 1), i = 0; i < 200; i++, t = add(t, 1)) if (periodEnd(t, kind, due, pay) && legal(notice, t, kind, literal)) return t;
   throw new Error("oracle found no date");
 }
 function lastNotice(t, kind, literal = false) { let n = t; while (!legal(n, t, kind, literal)) n = add(n, -1); return n; }
 function lastSend(n, method) { let s = n; while (deemed(s, method) > n) s = add(s, -1); return s; }
 
-let checks = 0, failed = 0, courierChecks = 0, holidayChecks = 0;
+let checks = 0, failed = 0, courierChecks = 0, holidayChecks = 0, readingChecks = 0;
 function fail(msg) { failed++; if (failed < 20) console.error("FAIL", msg); }
 const OK = { emailConsent: true, emailCoversNotice: true };
 
@@ -107,8 +107,13 @@ for (let sent = "2026-01-01"; sent < "2030-01-01"; sent = add(sent, 1)) {
     const notice = deemed(sent, method);
     const base = { noticeDate: sent, delivery: method, ...OK };
     for (const due of dues) {
-      const t = earliest(notice, "monthly", due), n = lastNotice(t, "monthly");
-      expectSame(`${sent} ${method} monthly ${due}`, L.compute({ ...base, kind: "monthly", dueDay: due }), { notice, termination: t, lastNoticeDay: n, lastSendDay: lastSend(n, method), lastSendDayLiteral: literalSend(notice, t, "monthly", method), valid: true });
+      // Round 8: when the end date is reached only on the s. 89 (1) reading, the literal end date leads and
+      // the reading's end date is kept as readingOnly.
+      const te = earliest(notice, "monthly", due), t = earliest(notice, "monthly", due, 0, true), n = lastNotice(t, "monthly");
+      const rm = L.compute({ ...base, kind: "monthly", dueDay: due });
+      expectSame(`${sent} ${method} monthly ${due}`, rm, { notice, termination: t, lastNoticeDay: n, lastSendDay: lastSend(n, method), lastSendDayLiteral: literalSend(notice, t, "monthly", method), valid: true });
+      readingChecks++;
+      if ((te !== t) !== Boolean(rm.readingOnly) || (rm.readingOnly && rm.readingOnly.termination !== te)) { fail(`${sent} ${method} monthly ${due}: reading only ${rm.readingOnly && rm.readingOnly.termination} oracle ${te}`); }
     }
     for (let pay = 0; pay < 7; pay++) {
       const t = earliest(notice, "weekly", 0, pay), n = lastNotice(t, "weekly");
@@ -125,7 +130,10 @@ for (let sent = "2026-01-01"; sent < "2030-01-01"; sent = add(sent, 1)) {
       const r = L.compute({ ...base, kind: "fixed", dueDay: 1, expiryDate: expiry });
       if (expiry <= notice) { checks++; if (!r.error) fail(`${sent} ${method} fixed ${expiry}: expected an error`); continue; }
       const n = lastNotice(expiry, "fixed");
-      expectSame(`${sent} ${method} fixed ${expiry}`, r, { notice, termination: expiry, lastNoticeDay: n, lastSendDay: lastSend(n, method), lastSendDayLiteral: literalSend(notice, expiry, "fixed", method), valid: legal(notice, expiry, "fixed") });
+      const ve = legal(notice, expiry, "fixed"), vl = legal(notice, expiry, "fixed", true);
+      expectSame(`${sent} ${method} fixed ${expiry}`, r, { notice, termination: expiry, lastNoticeDay: n, lastSendDay: lastSend(n, method), lastSendDayLiteral: literalSend(notice, expiry, "fixed", method), valid: vl });
+      readingChecks++;
+      if ((ve !== vl) !== Boolean(r.readingOnly) || (r.readingOnly && r.readingOnly.valid !== ve)) fail(`${sent} ${method} fixed ${expiry}: reading only flag`);
     }
   }
   // Courier: the skipped days and the assumed closure note must match the oracle.
@@ -150,4 +158,4 @@ for (let sent = "2026-01-01"; sent < "2030-01-01"; sent = add(sent, 1)) {
   }
 }
 if (failed) { console.error(failed + " failed out of " + checks); process.exit(1); }
-console.log("property tests (separate oracle): " + checks + " cases passed, plus " + courierChecks + " courier holiday cases and " + holidayChecks + " holiday tables");
+console.log("property tests (separate oracle): " + checks + " cases passed, plus " + readingChecks + " literal headline checks, " + courierChecks + " courier holiday cases and " + holidayChecks + " holiday tables");

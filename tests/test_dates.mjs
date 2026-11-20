@@ -33,10 +33,13 @@ eq("jan1 special", b.usedSpecial, true);
 // version stopped at January 1.
 eq("jan1 last notice", b.lastNoticeDay, "2027-01-02");
 
-// Jan 2, 2027 is inside the extended deadline, so it still reaches February 28 under s. 44 (5).
+// Jan 2, 2027 is inside the extended deadline only on the author's reading of s. 89 (1).
 const c = L.compute({ noticeDate: "2027-01-02", kind: "monthly", dueDay: 1 });
-eq("jan2 term", c.termination, "2027-02-28");
-eq("jan2 special?", c.usedSpecial, true);
+// Round 8: notice on January 2, 2027 reaches February 28 only on the s. 89 (1) reading, so the safe
+// literal date leads and February 28 is kept as the contingent line.
+eq("jan2 term (literal headline)", c.termination, "2027-03-31");
+eq("jan2 not special on the literal date", c.usedSpecial, false);
+eq("jan2 reading only term", c.readingOnly.termination + " " + c.readingOnly.valid, "2027-02-28 true");
 
 // Feb 1, 2027 can use March 31 under special rule, which is earlier than Feb 1+60=Apr 2 / Apr 30.
 const d = L.compute({ noticeDate: "2027-02-01", kind: "monthly", dueDay: 1 });

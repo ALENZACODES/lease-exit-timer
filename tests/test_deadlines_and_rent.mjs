@@ -37,19 +37,20 @@ eq("2027: feb 1 monday is not extended", iso(L.s89Extend(D("2027-02-01"))), "202
 eq("rule 1.14 for jan 1 2027 reaches monday jan 4", iso(L.rule114Extend(D("2027-01-01"))), "2027-01-04");
 
 // Notice on the extended day still reaches the end of February or March.
-eq("hand jan 2 2027 ends feb 28", [M("2027-01-02").termination, M("2027-01-02").usedSpecial], ["2027-02-28", true]);
+eq("hand jan 2 2027 ends feb 28 on the reading only", [M("2027-01-02").readingOnly.termination, M("2027-01-02").termination, M("2027-01-02").usedSpecial], ["2027-02-28", "2027-03-31", false]);
 eq("hand jan 3 2027 does not", M("2027-01-03").termination, "2027-03-31");
 eq("hand jan 4 2027 (rule 1.14 day) is not relied on", M("2027-01-04").termination, "2027-03-31");
-eq("hand jan 3 2028 ends feb 29 2028", M("2028-01-03").termination, "2028-02-29");
+eq("hand jan 3 2028 ends feb 29 2028 on the reading only", [M("2028-01-03").readingOnly.termination, M("2028-01-03").termination], ["2028-02-29", "2028-03-31"]);
 eq("hand jan 4 2028 does not", M("2028-01-04").termination, "2028-03-31");
-eq("hand jan 3 2034 ends feb 28 2034", M("2034-01-03").termination, "2034-02-28");
-eq("hand feb 2 2026 ends mar 31 2026", M("2026-02-02").termination, "2026-03-31");
+eq("hand jan 3 2034 ends feb 28 2034 on the reading only", [M("2034-01-03").readingOnly.termination, M("2034-01-03").termination], ["2034-02-28", "2034-03-31"]);
+eq("hand feb 2 2026 ends mar 31 2026 on the reading only", [M("2026-02-02").readingOnly.termination, M("2026-02-02").termination], ["2026-03-31", "2026-04-30"]);
 eq("hand feb 3 2026 does not", M("2026-02-03").termination, "2026-04-30");
 eq("hand feb 2 2027 does not reach march (no extension in 2027)", M("2027-02-02").termination, "2027-04-30");
 
-const x = M("2027-01-02").deadlineExtended;
+const x = L.computeRaw({ noticeDate: "2027-01-02", kind: "monthly", dueDay: 1, delivery: "hand" }).deadlineExtended;
 eq("extension object", x, { deadline: "2027-01-01", extendedTo: "2027-01-02", rule114: "2027-01-04", usedByThisNotice: true });
-eq("last notice day is the extended day", M("2027-01-02").lastNoticeDay, "2027-01-02");
+eq("last notice day is the extended day on the reading", M("2027-01-02").readingOnly.lastNoticeDay, "2027-01-02");
+eq("reading only line names both dates", [M("2027-01-02").readingOnly.deadline, M("2027-01-02").readingOnly.extendedTo, M("2027-01-02").readingOnly.rule114], ["2027-01-01", "2027-01-02", "2027-01-04"]);
 eq("mail nov 28 2026: last mail day dec 28", M("2026-11-28", { delivery: "mail" }).lastSendDay, "2026-12-28");
 eq("mail dec 29 2026 misses february", M("2026-12-29", { delivery: "mail" }).termination, "2027-03-31");
 eq("no extension object for an ordinary january end", M("2026-11-19").deadlineExtended, undefined);

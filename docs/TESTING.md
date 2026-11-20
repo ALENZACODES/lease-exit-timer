@@ -5,15 +5,18 @@ Lease Exit Timer started on 9 November 2026 as a small date counter with 27 hand
 | When (America/Toronto) | Commit | What happened |
 | --- | --- | --- |
 | 9 November 2026 | `e67f515` | First version: hand delivery only, 27 hand written checks. |
-| 19 November 2026, morning | `4afd90f` | My own second pass, before any outside review: the brute force check (section 1), delivery methods (section 2) and the browser check. |
+| 19 November 2026, morning | `4afd90f` | My own second pass, before any rubric review: the brute force check (section 1), delivery methods (section 2) and the browser check. |
 | 19 November 2026, morning | `2746fc3` | Screenshots and the silent walkthrough video. The video shows this build, so it shows nothing from the rows below. |
-| 19 November 2026 | `c126a25` | Changes after the first round of outside review (section 6). |
-| 19 November 2026 | `5f97a27` | Changes after the second round of outside review (section 7). |
-| 19 November 2026 | `3780dfa` | Changes after the third round of outside review (section 8). |
-| 19 November 2026, afternoon | `7ad21ca` | Changes after the fourth round of outside review (section 9). The documents and screenshots that describe it follow in the next commit. |
+| 19 November 2026 | `c126a25` | Changes after the first round of rubric review (section 6). |
+| 19 November 2026 | `5f97a27` | Changes after the second round of rubric review (section 7). |
+| 19 November 2026 | `3780dfa` | Changes after the third round of rubric review (section 8). |
+| 19 November 2026, afternoon | `7ad21ca` | Changes after the fourth round of rubric review (section 9). The documents and screenshots that describe it follow in the next commit. |
 | 19 November 2026, afternoon | `14bfbe3` | The rest of section 9: the decision first, the extension explained, stale claims fixed, the first current build GIF and fresh screenshots. |
-| 19 November 2026, afternoon | `17f2d27` | Changes after the fifth round of outside review (section 10), version 1.5.0. |
-| 19 November 2026, evening | v1.6.0 | Changes after the sixth round of outside review (section 11). This is the commit that adds this row. |
+| 19 November 2026, afternoon | `17f2d27` | Changes after the fifth round of rubric review (section 10), version 1.5.0. |
+| 19 November 2026, evening | `3f7c9e7` | Changes after the sixth round of rubric review (section 11), version 1.6.0. |
+| 19 November 2026, night | v1.7.0 | Changes after the seventh round of rubric review (section 12). This is the commit that adds this row. |
+
+**What a rubric review is.** Each review round was a written critique of a project brief I wrote: the code excerpts, the test results and the draft entry text. Each critique scored the entry against the event's four published criteria and ranked a list of fixes. The reviewers worked from the brief only. They did not run the page, the tests or the video, and they did not take part as renters. All seven rounds ran on 19 November 2026, so they are document reviews done in one day, not user testing.
 
 The brute force check is what changed the build first.
 
@@ -52,9 +55,9 @@ A fixed term that is too late used to end at "not valid". Section 38 (1) says a 
 
 That check found one layout bug during the rebuild. A CSS grid rule overrode the `hidden` attribute, so the fixed term and weekly fields showed for every tenancy type. A global `[hidden]` rule fixed it.
 
-## 6. After the first outside review
+## 6. After the first rubric review
 
-Two outside reviews of the first build found real gaps. Each fix has tests in `tests/test_courier_email_and_n9.mjs` (55 checks).
+Two rubric reviews of the first build found real gaps. Each fix has tests in `tests/test_courier_email_and_n9.mjs` (55 checks).
 
 - **Holidays in the courier rule.** Rule 3.9 counts a courier delivery the day after hand off, or if that is a holiday, the next day that is not. Rule 1.1 defines a holiday as any Saturday, Sunday or other day the Board's offices are closed. The first build skipped weekends only. The engine now computes the Legislation Act, 2006, s. 88 holidays for any year, including Easter dates and the special cases in s. 88 (3), (4) and (5): when New Year's Day falls on a Sunday the Monday after is also a holiday; when July 1 is a Sunday, Canada Day is July 2; when Christmas Day falls on a Saturday the Monday after is also a holiday, and when it falls on a Sunday the Tuesday after is. A New Year's Day on a Saturday adds nothing. Civic Holiday is not on the s. 88 list; it is counted too, on purpose, and is counted for courier as a weekday the Board may be closed, labelled UNKNOWN. Section 7 describes how the page keeps it apart from statutory holidays. Section 10 describes the separate Canada Post calendar for mail. Before the fix, a courier hand off on 31 December 2026 counted on 1 January 2027 and the page offered 28 February 2027 under the winter rule. Now it counts on 4 January, and the earliest end is 31 March 2027. The last courier day for 28 February is 30 December. The brute force file also checks 1,461 courier hand offs: the counted day must be the first day after hand off that is not a Saturday, Sunday or holiday.
 - **Email scope.** Rule 3.5 allows email service only with written consent. The Board's Consent to Service by Email form lists rent increase notices, landlord entry notices, documents for a Board application and tenancy communication, and does not name a tenant's notice to end the tenancy. Email now needs two ticks: consent exists, and it covers this notice. The guard moved into the date engine so tests can check it, and the page reminds the user to include a name and phone number and keep proof.
@@ -62,7 +65,7 @@ Two outside reviews of the first build found real gaps. Each fix has tests in `t
 - **Form N9 checklist.** Every field on the official form, in order, appears under the date, with the termination date already written as dd/mm/yyyy and the last day to give it. The page says the courtesy note is not Form N9.
 - **Draft accuracy.** The Devpost draft now says the first brute force run was hand delivery only, cites RTA s. 47 and Legislation Act s. 88, and no longer says every date links to its rule.
 
-## 7. After the second outside review
+## 7. After the second rubric review
 
 The second round of review found that the brute force check was not independent, that two claims were too broad, and that two links in the reasoning were not shown. Each change has tests in `tests/test_statutory_service_and_n9.mjs` (53 checks), and the brute force file was rewritten.
 
@@ -74,7 +77,7 @@ The second round of review found that the brute force check was not independent,
 - **The last working day.** When the last day to mail or courier is a weekend or a statutory holiday, the page adds the last working day before it. This came from my own walkthrough (docs/WALKTHROUGH.md).
 - **Wording.** The README tagline no longer says every date links to its rule, the timeline above replaces a sentence that put the brute force check in the wrong order, and section 1 now says what the first brute force check did not cover.
 
-## 8. After the third outside review
+## 8. After the third rubric review
 
 Each change has tests in `tests/test_closures_methods_and_limits.mjs` (40 checks), and the oracle now checks more.
 
@@ -86,7 +89,7 @@ Each change has tests in `tests/test_closures_methods_and_limits.mjs` (40 checks
 - **Limits.** The page and the draft said that RTA s. 193, LTB rule 1.14 and Legislation Act s. 89 (1) can let a time limit that ends on a holiday be met on the next day, and that the page did not use that extension. Section 9 resolves it.
 - **Wording.** The oracle is no longer described as sharing no code with the engine. The draft lists rule 3.6 and says what the video shows and does not show. The current gallery leads with the before, failure, fix GIF.
 
-## 9. After the fourth outside review
+## 9. After the fourth rubric review
 
 Each change has tests in `tests/test_deadlines_and_rent.mjs` (59 checks), and the oracle in `tests/test_property.mjs` has its own reading of the extension.
 
@@ -96,9 +99,9 @@ Each change has tests in `tests/test_deadlines_and_rent.mjs` (59 checks), and th
 - **The rent estimate by period unit.** The engine already counted the extra rent in weeks for a weekly tenancy and days for a daily one, but nothing tested it and the wording read as if a month were always at stake. The line now says "Missing the last day by one day moves the end date by 1 week, about $400.00 more rent" (or day, or month), names the unit of the rent typed in, and mentions the duty to minimize losses in RTA s. 16. Tests cover weekly, daily, monthly, weekly by mail and a fixed term that falls back to monthly.
 - **The decision first.** The result opens with one sentence. In this round the courier example led with the legal Sunday, January 31, 2027. Section 10 changed it to lead with the practical day: "Send Form N9 by courier by Friday, January 29, 2027 to end your tenancy on March 31, 2027". The reasons, the holiday extension and the courier closures sit in a "Why this date" section under the timeline, open when there is a closure or an extension to read.
 - **Stale claims.** The video's closing card calls 81,816 cases the first brute force run; the first run was 20,454 cases (section 1), and the draft now says so. `docs/WALKTHROUGH.md` rows 1, 4 and 5 are marked as superseded where later changes replaced them. The headings above no longer use round numbers that did not match the draft.
-- **A current build capture.** `docs/screenshots/10-current-build.gif` is a silent 18 second before, failure, fix capture of the November 28 mail boundary and the courier holiday correction, made by automated browser capture. It is first in the gallery. It is a gallery image, not a new video. The video predates every outside review.
+- **A current build capture.** `docs/screenshots/10-current-build.gif` is a silent 18 second before, failure, fix capture of the November 28 mail boundary and the courier holiday correction, made by automated browser capture. It is first in the gallery. It is a gallery image, not a new video. The video predates every rubric review.
 
-## 10. After the fifth outside review
+## 10. After the fifth rubric review
 
 Each change has tests in `tests/test_deadlines_and_rent.mjs`, which grew to 59 checks, and the test files were renamed by feature. Commit `17f2d27`, version 1.5.0.
 
@@ -110,7 +113,7 @@ Each change has tests in `tests/test_deadlines_and_rent.mjs`, which grew to 59 c
 - **Test files renamed by feature:** `test_courier_email_and_n9.mjs`, `test_statutory_service_and_n9.mjs` and `test_closures_methods_and_limits.mjs`.
 - **A keyboard and accessibility tree self check**, at the end of this file.
 
-## 11. After the sixth outside review
+## 11. After the sixth rubric review
 
 Version 1.6.0. Each change has tests in the new `tests/test_literal_deadline_and_closures.mjs` (87 checks), and the oracle in `tests/test_property.mjs` now also checks the literal deadline.
 
@@ -123,6 +126,16 @@ Version 1.6.0. Each change has tests in the new `tests/test_literal_deadline_and
 - **The GIF remade as one current build task.** `docs/screenshots/10-current-build.gif` is now a silent 24 second capture of v1.6.0, made by automated browser capture: open the page, type Saturday, November 28, 2026 and choose Canada Post, read the decision (mail by Thursday, December 24; legal limit Sunday, December 27), see the same end date by every method, then switch to a courier hand off on Thursday, December 31 (send by Friday, January 29; legal limit Sunday, January 31). The screenshots were taken again from the same build.
 - **This file.** The timeline now has rows for `14bfbe3`, `17f2d27` and this version. Section 9's stale courier example is marked as replaced. Section 6 now points to section 10 for the Canada Post calendar. Section 5 and the self check no longer disagree, and neither one is called a screen reader test. The video erratum is in section 1.
 - **Eligibility in the draft.** The Devpost draft now says John Khan is a current student, is above the age of majority in Ontario, and works solo under the personal GitHub handle ALENZACODES, which is not a company or organization.
+
+## 12. After the seventh rubric review
+
+Version 1.7.0. Each change has tests in the new `tests/test_safe_headline_and_mailing_day.mjs` (44 checks, including a scan of 14,608 notices from 2026 to 2035 by every method), and the oracle in `tests/test_property.mjs` now also checks the headline (64,284 more checks).
+
+- **The safe end date leads.** One review found a contradiction. Notice by hand on Saturday, January 2, 2027 still ended on February 28, 2027 in the decision sentence and on the Form N9 checklist, though that date only works on the author's reading of s. 89 (1). Now, whenever a notice reaches an earlier end date only on that reading, the headline, the decision sentence, the Form N9 checklist and the calendar reminder all use the end date that meets the literal s. 44 (5) date: March 31, 2027 in this case. February 28 appears on its own line, marked "Contingent, not advised", with the advice to agree it with the landlord in writing first. The oracle computes both readings itself and checks the headline in every case. To check the oracle, I turned the new headline off and got 120 failures, then put it back. Fourteen original checks in `tests/test_dates.mjs`, `tests/test_closures_methods_and_limits.mjs`, `tests/test_deadlines_and_rent.mjs` and `tests/test_literal_deadline_and_closures.mjs` changed for this, with comments; the raw engine result is still available as `computeRaw()` and still tested.
+- **Section 44 (5) quoted, and its scope.** `site/data/rules.json` now has the exact text of s. 44 (5), read on 19 November 2026 from the official e-Laws text. It covers a tenant's notice under subsections (2), (3) or (4): monthly, yearly and fixed term. The engine already applied it to fixed terms ending on the last day of February or March and never to daily or weekly tenancies; that is now tested directly, including a fixed term ending February 27, which gets no special rule. The page also notes that s. 44 (5) is a deeming rule ("shall be deemed to have given at least 60 days notice"), not a time limit, which makes the s. 89 (1) reading weaker still.
+- **The theoretical last mailing day.** For the November 28 mail case, Sunday, December 27, 2026 is now called the theoretical last mailing day, not a day with confirmed postal collection. The page says once that a letter put in a street box that Sunday may not be collected or postmarked until Tuesday, December 29, because Canada Post lists Monday, December 28 as a holiday. A dated counter receipt is now called evidence of the mailing day, not proof of how the Board will count it.
+- **Canada Post: published and calculated years apart.** Canada Post's published schedule covers 2026 and 2027. The dates this page uses for 2028 to 2035 are calculated from the same holiday names and weekend rule. `site/data/rules.json` now names the two groups, PUBLISHED and CALCULATED, NOT PUBLISHED; every calculated row's source starts "Calculated, not published"; the tests check the groups separately; and when an advised mailing day depends on a calculated year, the page says so. The wording "Canada Post is closed" became "listed as a holiday with no collection or delivery", because a post office inside a store keeps the store's hours.
+- **Wording.** The colour names in the draft were removed; the colours are given as hex values only. The review rounds are now called rubric reviews everywhere, with the description above of what each round was, so the wording does not suggest more than a document review. The draft gives the event window.
 
 ## How to run
 

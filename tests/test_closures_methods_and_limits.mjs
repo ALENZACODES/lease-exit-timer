@@ -73,7 +73,7 @@ for (const m of ["hand", "mail", "courier"]) {
     for (const x of r.byMethod) {
       if (x.method === "email") continue;
       const back = L.compute({ noticeDate: x.lastSendDay, kind: "monthly", dueDay: 1, delivery: x.method });
-      if (back.termination !== r.termination) same = false;
+      if (back.termination !== r.termination && !(back.readingOnly && back.readingOnly.termination === r.termination)) same = false;
       const late = L.compute({ noticeDate: L.toISO(L.addDays(D(x.lastSendDay), 1)), kind: "monthly", dueDay: 1, delivery: x.method });
       if (late.termination === r.termination) same = false;
     }

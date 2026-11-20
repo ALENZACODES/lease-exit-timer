@@ -7,7 +7,7 @@
     {
       "name": "Residential Tenancies Act, 2006, S.O. 2006, c. 17, sections 2 (1), 16, 38, 44, 47, 191 and 193",
       "url": "https://www.ontario.ca/laws/statute/06r17",
-      "note": "Official e-Laws text, read on 2026-11-19, America/Toronto. Section 2 (1) defines the Rules as the Board's rules of practice and procedure. Section 44 sets the 28 and 60 day periods and the February and March rule. Section 47 lets a tenant end a tenancy at the end of a period or term by notice under s. 44. Section 191 (1) lists how a notice is given, and clause (g) adds any other means allowed in the Rules. Section 191 (3) says mail counts on the fifth day after mailing. Section 38 (1) turns an ended fixed term into a monthly tenancy. Section 16 gives a person who claims an amount after a breach a duty to take reasonable steps to minimize losses, mentioned beside the late rent estimate. Section 193 says time is computed under the Rules."
+      "note": "Official e-Laws text, read on 2026-11-19, America/Toronto. Section 2 (1) defines the Rules as the Board's rules of practice and procedure. Section 44 sets the 28 and 60 day periods and the February and March rule. Section 47 lets a tenant end a tenancy at the end of a period or term by notice under s. 44. Section 191 (1) lists how a notice is given, and clause (g) adds any other means allowed in the Rules. Section 191 (3) says mail counts on the fifth day after mailing. Section 38 (1) turns an ended fixed term into a monthly tenancy. Section 16 gives a person who claims an amount after a breach a duty to take reasonable steps to minimize losses, mentioned beside the late rent estimate. Section 193 says time is computed under the Rules. Section 44 (5) is quoted word for word in february_march_rule.statute_text, read on 19 November 2026 through the e-Laws document service."
     },
     {
       "name": "Legislation Act, 2006, S.O. 2006, c. 21, Sched. F, sections 87, 88, 89 (1) and 89 (3)",
@@ -37,7 +37,7 @@
     {
       "name": "Canada Post official holiday schedule",
       "url": "https://www.canadapost-postescanada.ca/cpc/en/support/kb/other-products-services/post-office/find-out-operating-hours-on-holidays.page",
-      "note": "Read on 19 November 2026, America/Toronto. The page lists official 2026 and 2027 dates, including Boxing Day (National) on December 28 in both years, and says Canada Post is closed on national, provincial and territorial holidays, with no collection or delivery of mail on those days. It also says post offices operated by the private sector are open according to the hours of the host business, and: \"When a holiday falls on a Saturday or Sunday, it may be applied to the next business day.\" The page gives no general weekend hours, so this page simply does not count a Saturday or Sunday as a mailing day and advises a dated receipt. Regular collection and delivery occur on provincial Family Day holidays. Years after 2027 are computed from the same holiday names with that weekend rule, not copied from a published table. The calendar is used only for the advised mail send day, not for when notice legally counts under s. 191 (3)."
+      "note": "Read on 19 November 2026, America/Toronto. The page lists official 2026 and 2027 dates, including Boxing Day (National) on December 28 in both years, and says there is no collection or delivery of mail on national, provincial and territorial holidays. It also says post offices operated by the private sector are open according to the hours of the host business, and: \"When a holiday falls on a Saturday or Sunday, it may be applied to the next business day.\" The page gives no general weekend hours, so this page simply does not count a Saturday or Sunday as a mailing day and advises a dated receipt. Regular collection and delivery occur on provincial Family Day holidays. Years after 2027 are computed from the same holiday names with that weekend rule, not copied from a published table. The calendar is used only for the advised mail send day, not for when notice legally counts under s. 191 (3). Years 2028 to 2035 are calculated by this page, not published by Canada Post."
     }
   ],
   "ordinary_rules": [
@@ -81,7 +81,7 @@
       "fixed",
       "yearly"
     ],
-    "summary": "When the tenant would normally have to give 60 days' notice, a notice for the last day of February may be given no later than January 1 of that year, and a notice for the last day of March may be given no later than February 1 of that year. The official N9 instructions describe this as a special rule that allows less than 60 days' notice in those two cases. This page advises giving notice by the literal January 1 or February 1 date. On the author's reading of Legislation Act s. 89 (1), a deadline that falls on a Sunday or an s. 88 holiday runs to the next day that is neither, so January 1 runs to January 2 or later, and a February 1 that falls on a Sunday runs to the Monday. No tribunal or court decision applying s. 89 (1) to these dates is cited, so the later day is shown only as a possible limit. LTB rule 1.15 lets a notice be delivered on a holiday.",
+    "summary": "When the tenant would normally have to give 60 days' notice, a notice for the last day of February may be given no later than January 1 of that year, and a notice for the last day of March may be given no later than February 1 of that year. The official N9 instructions describe this as a special rule that allows less than 60 days' notice in those two cases. This page advises giving notice by the literal January 1 or February 1 date, and when a notice only reaches the end of February or March on the reading below, the headline end date is the later one that meets the literal date. On the author's reading of Legislation Act s. 89 (1), a deadline that falls on a Sunday or an s. 88 holiday runs to the next day that is neither, so January 1 runs to January 2 or later, and a February 1 that falls on a Sunday runs to the Monday. No tribunal or court decision applying s. 89 (1) to these dates is cited, so the later day is shown only as a possible limit. LTB rule 1.15 lets a notice be delivered on a holiday.",
     "february": {
       "termination": "last-day-of-february",
       "latest_notice": "January 1 of that year"
@@ -89,7 +89,12 @@
     "march": {
       "termination": "last-day-of-march",
       "latest_notice": "February 1 of that year"
-    }
+    },
+    "statute_text": "(5) A tenant who gives notice under subsection (2), (3) or (4) which specifies that the termination is to be effective on the last day of February or the last day of March in any year shall be deemed to have given at least 60 days notice of termination if the notice is given not later than January 1 of that year in respect of a termination which is to be effective on the last day of February, or February 1 of that year in respect of a termination which is to be effective on the last day of March. 2006, c. 17, s. 44 (5).",
+    "statute_text_source": "Residential Tenancies Act, 2006, s. 44 (5), official e-Laws text read on 19 November 2026, America/Toronto.",
+    "scope": "Subsection (2) is a monthly tenancy, (3) a yearly tenancy and (4) a fixed term. So the engine applies s. 44 (5) to monthly tenancies and to fixed terms whose expiry date is the last day of February or the last day of March, and never to daily or weekly tenancies under s. 44 (1).",
+    "deeming_note": "Section 44 (5) is a deeming rule, not a time limit: notice given by January 1 or February 1 is treated as at least 60 days. Legislation Act s. 89 (1) speaks of time limits that would otherwise expire on a holiday, so the deeming wording makes the author's s. 89 (1) reading weaker still. That is why the headline end date, the Form N9 checklist and the calendar reminder always use the literal date, and an end date that needs the reading is shown only as a contingent line.",
+    "scope_tested_in": "tests/test_safe_headline_and_mailing_day.mjs"
   },
   "exceptions_not_calculated": [
     "If the landlord was required to use the standard form of lease, did not, and you made a written demand, the N9 instructions describe a limited way to end a fixed term earlier. This tool does not try to date that path.",
@@ -177,9 +182,25 @@
   "holiday_kinds": {
     "weekend": "Saturday and Sunday, named in LTB rule 1.1 itself. These are the only skipped days that do not depend on an assumption.",
     "statutory": "Listed in the Legislation Act, 2006, s. 88 (2), with the extra days in s. 88 (3) (the Monday after a New Year's Day that falls on a Sunday), s. 88 (4) (Canada Day moves to July 2 when July 1 is a Sunday) and s. 88 (5) (the Monday after a Christmas Day on a Saturday, the Tuesday after one on a Sunday). Rule 1.1 does not use the s. 88 list. It counts a weekday as a holiday only if the Board's offices are closed, so each of these is labelled UNKNOWN and counted as a closure. The Board does not publish a closure calendar that this page could find.",
-    "assumed": "Civic Holiday, and December 28 when Boxing Day falls on a Saturday or Sunday (Boxing Day observed, a day Canada Post is closed). Neither is on the s. 88 list. Both are labelled UNKNOWN and counted as a closure, for the same reason.",
+    "assumed": "Civic Holiday, and December 28 when Boxing Day falls on a Saturday or Sunday (Boxing Day observed, listed by Canada Post as a holiday with no collection or delivery). Neither is on the s. 88 list. Both are labelled UNKNOWN and counted as a closure, for the same reason.",
     "effect": "For the weekdays this page lists (the s. 88 holidays, Civic Holiday and Boxing Day observed), counting a day as closed can only make a courier notice count later and the advised send day earlier, never later. The list does not include every possible closure. When an assumption alone changes the end date, the page says what the date would be if the offices were open.",
     "unknown": "A day fixed by proclamation, or an unplanned office closure, cannot be known ahead. Leave a spare day."
   },
-  "n9_scope": "Every field the tenant or representative must complete. The Office Use Only box is left out. The page does not fill in, sign or send the form."
+  "n9_scope": "Every field the tenant or representative must complete. The Office Use Only box is left out. The page does not fill in, sign or send the form.",
+  "canada_post_schedule": {
+    "published": {
+      "years": [
+        2026,
+        2027
+      ],
+      "status": "PUBLISHED",
+      "note": "Copied from the Canada Post official holiday schedule page, read on 19 November 2026, America/Toronto. Each row in site/dates.js has published: true."
+    },
+    "calculated": {
+      "years": "2028 to 2035",
+      "status": "CALCULATED, NOT PUBLISHED",
+      "note": "Computed by this page from the holiday names and the weekend rule on that page. Canada Post has not published or confirmed these years in any schedule this page has read. Each row has published: false, and the tests check the two groups separately. When an advised mailing day depends on a calculated year, the page says so."
+    },
+    "collection": "The schedule lists holidays with no collection or delivery of mail. It does not promise weekend collection, and a post office inside a store keeps the store's hours. A theoretical last mailing day on a weekend or holiday is therefore not a day with confirmed collection. A dated counter receipt is evidence of the mailing day, not proof of how the Board will count it."
+  }
 }

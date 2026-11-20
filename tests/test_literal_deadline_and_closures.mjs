@@ -41,16 +41,21 @@ eq("mail: note names private sector post offices", m.sendDayNote.includes("follo
 eq("mail: no unsourced weekend closure claim", /does not make regular collection or delivery on Saturday or Sunday|closed on December 25, the weekend/.test(m.sendDayNote + app + rules), false);
 eq("mail: December 24 still reaches February 28", C("2026-12-24", { delivery: "mail" }).termination, "2027-02-28");
 eq("mail: December 27 still reaches February 28 on the literal date", L.compute({ noticeDate: "2026-12-27", kind: "monthly", dueDay: 1, delivery: "mail", literalOnly: true }).termination, "2027-02-28");
-eq("mail: December 28 needs the extension", [C("2026-12-28", { delivery: "mail" }).termination, L.compute({ noticeDate: "2026-12-28", kind: "monthly", dueDay: 1, delivery: "mail", literalOnly: true }).termination], ["2027-02-28", "2027-03-31"]);
+eq("mail: December 28 needs the extension", [C("2026-12-28", { delivery: "mail" }).readingOnly.termination, L.compute({ noticeDate: "2026-12-28", kind: "monthly", dueDay: 1, delivery: "mail", literalOnly: true }).termination], ["2027-02-28", "2027-03-31"]);
 
 // 3. A notice that only reaches its end date through the extension says what the literal date gives.
 const j2 = C("2027-01-02");
-eq("January 2 by hand: end date on the author's reading", j2.termination, "2027-02-28");
-eq("January 2 by hand: literal alternative", [j2.literalAlternative.valid, j2.literalAlternative.termination], [true, "2027-03-31"]);
+// Round 8: the safe literal end date is the headline, the Form N9 date and the calendar date.
+eq("January 2 by hand: headline is the literal end date", [j2.headline, j2.valid, j2.termination], ["literal", true, "2027-03-31"]);
+eq("January 2 by hand: February 28 kept as the contingent reading", [j2.readingOnly.valid, j2.readingOnly.termination], [true, "2027-02-28"]);
+eq("January 2 by hand: checklist writes March 31", L.n9Checklist(j2).find((x) => x.page === 1 && /last day of my tenancy/.test(x.field)).fill, "31/03/2027");
+eq("January 2 by hand: reminder names March 31", L.reminderICS(j2, "20261119T000000Z").includes("20270331"), true);
+eq("January 2 by hand: raw engine still gives the reading", L.computeRaw({ noticeDate: "2027-01-02", kind: "monthly", dueDay: 1, delivery: "hand" }).literalAlternative.termination, "2027-03-31");
 eq("January 2 by hand: no literal advised day before the notice", j2.lastSendDayLiteral, undefined);
-eq("January 1 by hand: no literal alternative needed", C("2027-01-01").literalAlternative, undefined);
+eq("January 1 by hand: no literal alternative needed", [C("2027-01-01").literalAlternative, C("2027-01-01").readingOnly, C("2027-01-01").termination], [undefined, undefined, "2027-02-28"]);
 const fx = C("2027-01-02", { kind: "fixed", expiryDate: "2027-02-28" });
-eq("fixed term on January 2: valid on the reading, too late on the literal date", [fx.valid, fx.literalAlternative.valid], [true, false]);
+eq("fixed term on January 2: too late on the literal date, valid only on the reading", [fx.valid, fx.readingOnly.valid, fx.headline], [false, true, "literal"]);
+eq("fixed term on January 2: the checklist is empty when the literal result is too late", L.n9Checklist(fx).length, 0);
 
 // 4. February 1, 2026 is a Sunday: the literal day leads.
 const f1 = C("2026-01-15");
