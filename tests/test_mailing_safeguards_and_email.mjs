@@ -25,7 +25,7 @@ eq("mail: practical day unchanged", m.lastPracticalSendDay, "2026-12-24");
 eq("mail: hand it over a counter, not into a street box", m.sendDayNote.includes("Hand it over a post office counter, not into a street box, so the day it was accepted can be shown."), true);
 eq("mail: the receipt is still evidence, not a guarantee", m.sendDayNote.includes("It is evidence of the day you mailed it, not a guarantee of how the Board will count it."), true);
 eq("mail: if no counter can accept it by the advised day", m.sendDayNote.includes("If no counter can accept it by Thursday, December 24, 2026, do not count on a street box or a later postmark"), true);
-eq("mail: points to hand delivery and consented email", m.sendDayNote.includes("check the last day to give it by hand in the line that lists every method, or use email if the landlord's written consent covers this notice."), true);
+eq("mail: points to hand delivery and consented email, each only if it fits", m.sendDayNote.includes("Two other ways may still work, each only if it fits your case: giving it by hand by the last day shown for hand delivery in the line that lists every method") && m.sendDayNote.includes("or email, only if the landlord's written consent covers this notice."), true);
 eq("mail: never calls a street box a safe mailing", /street box (is|counts as) (safe|legal|guaranteed)/i.test(m.sendDayNote), false);
 const hand = m.byMethod.find((x) => x.method === "hand");
 eq("mail: by hand, the last day for the same end date is later than the advised mail day", hand && (hand.lastSendDayLiteral || hand.lastSendDay) > m.lastPracticalSendDay, true);
