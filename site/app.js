@@ -15,7 +15,8 @@ function pretty(iso) {
 }
 function prettyLong(iso) { return iso ? L.prettyLong(L.parseISO(iso)) : ""; }
 function advisedDay(out) { return out.lastPracticalSendDay || out.lastSendDay; }
-function legalDiffers(out) { return out.lastPracticalSendDay && out.lastPracticalSendDay !== out.lastSendDay; }
+function legalLimit(out) { return out.lastSendDayLiteral || out.lastSendDay; }
+function legalDiffers(out) { return out.lastPracticalSendDay && out.lastPracticalSendDay !== legalLimit(out); }
 function method() { return document.querySelector('input[name="delivery"]:checked').value; }
 function toggleRows() {
   const k = $("kind").value, m = method();
@@ -52,7 +53,7 @@ function courierNote(out) {
   if (st.length) parts.push('UNKNOWN, counted as closed: Ontario holiday under the Legislation Act, 2006, s. 88. No Board closure calendar was found for this day: ' + st.join(", ") + '.');
   if (as.length) parts.push('UNKNOWN, counted as closed: not on the s. 88 list, and no Board closure calendar was found for this day: ' + as.join(", ") + '.');
   let html = '<div class="source-note" id="courier-skipped"><p><strong>Courier date moved past these days (LTB rule 3.9).</strong></p><ul>' + parts.map((t) => '<li>' + t + '</li>').join("") + '</ul>';
-  if (st.length || as.length) html += '<p id="closure-unknown"><strong>Board closures are UNKNOWN.</strong> Rule 1.1 counts a weekday as a holiday only if the Board\'s offices are closed that day. The Board does not publish a closure calendar that this page could find, so each weekday closure above is marked UNKNOWN and counted as closed. For those listed weekdays, counting a day as closed can only make the advised send day earlier. The list does not include every possible closure. When Boxing Day falls on a Saturday, as in 2026, the Legislation Act gives no substitute day, so Monday, December 28 is not skipped here for courier service unless the Board\'s offices are closed that day, which this page has not confirmed.</p>';
+  if (st.length || as.length) html += '<p id="closure-unknown"><strong>Board closures are UNKNOWN.</strong> Rule 1.1 counts a weekday as a holiday only if the Board\'s offices are closed that day. The Board does not publish a closure calendar that this page could find, so each weekday closure above is marked UNKNOWN and counted as closed. For the listed weekdays, counting a day as closed can only make the notice count later and the advised send day earlier, never later. The list does not include every possible closure. When Boxing Day falls on a weekend, as in 2026, the Legislation Act gives no substitute day, but Canada Post is closed on Monday, December 28, so that day is listed as UNKNOWN and counted as closed too.</p>';
   const o = out.officeOpen;
   if (o) {
     html += o.changesEnd
@@ -64,8 +65,9 @@ function courierNote(out) {
 function deadlineNote(out) {
   const x = out.deadlineExtended;
   if (!x) return "";
-  return '<div class="source-note" id="deadline-extended"><p><strong>Holiday extension of the ' + (L.parseISO(x.deadline).m === 1 ? "January 1" : "February 1") + ' deadline.</strong> Section 44 (5) lets notice given by ' + pretty(x.deadline) + ' end the tenancy on ' + pretty(out.termination) + '. That day is a holiday under the Legislation Act, 2006, s. 88, and this page uses ' + pretty(x.extendedTo) + '.</p>' +
-    '<p>The statute text, read on 19 November 2026, America/Toronto, from the official e-Laws site: Legislation Act, 2006, s. 89 (1) says \"Time limits that would otherwise expire on a holiday are extended to include the next day that is not a holiday.\" Section 87 says \"holiday\" means a holiday as described in section 88, which is a Sunday or a day on the s. 88 list, not a Saturday. Section 46 says \"Every provision of this Part applies to every Act and regulation.\"</p>' +
+  return '<div class="source-note" id="deadline-extended"><p><strong>Holiday extension of the ' + (L.parseISO(x.deadline).m === 1 ? "January 1" : "February 1") + ' deadline: the author\'s reading.</strong> Section 44 (5) lets notice given not later than ' + pretty(x.deadline) + ' end the tenancy on ' + pretty(out.termination) + '. That day is a holiday under the Legislation Act, 2006, s. 88. On the author\'s reading of s. 89 (1), the deadline extends to ' + pretty(x.extendedTo) + '. The advised day on this page always meets the literal ' + pretty(x.deadline) + ' date, and the extended day is shown only as a possible later limit.</p>' +
+    '<p>The statute text, read on 19 November 2026, America/Toronto, from the official e-Laws site: Legislation Act, 2006, s. 89 (1) says \"Time limits that would otherwise expire on a holiday are extended to include the next day that is not a holiday.\" Section 87 says \"holiday\" means a holiday as described in section 88. Section 88 (2) lists Sunday and the named holidays; Saturday is not on the list. Section 46 says \"Every provision of this Part applies to every Act and regulation.\" Whether s. 89 (1) applies to the fixed dates in s. 44 (5) has not been decided in any case cited here.</p>' +
+    '<p>LTB rule 1.15 says \"A notice or document may be delivered to a party or person on a holiday and a notice may take effect on a holiday.\" So giving notice by hand on ' + pretty(x.deadline) + ' itself does not need any extension.</p>' +
     (x.rule114 ? '<p>RTA s. 193 says time is computed under the Board\'s Rules. LTB rule 1.14 could be read to reach ' + pretty(x.rule114) + ', because the Board also treats Saturdays as holidays. This page names that later day and does not rely on it, because it is not clear the Board\'s procedural rules govern a notice given before any application.</p>' : '') +
     '<p>The 60 day and 28 day minimum periods are not extended. They are minimum notice periods, not time limits that expire. No court decision on this point is cited here. This is the author\'s reading of those primary sources, not an adjudicated interpretation.</p></div>';
 }
@@ -74,7 +76,10 @@ function decision(out) {
   const how = { hand: "by hand", mail: "by Canada Post", courier: "by courier", email: "by email, with written consent" }[out.delivery];
   if (!out.valid) return '<p class="decision" id="decision">It is too late to end this fixed term on ' + pretty(out.termination) + ' by notice.</p>';
   let html = '<p class="decision" id="decision">' + verb + ' Form N9 ' + how + ' by ' + prettyLong(advisedDay(out)) + ' to end your tenancy on ' + pretty(out.termination) + '.</p>';
-  if (legalDiffers(out)) html += '<p class="legal-limit" id="legal-limit">' + prettyLong(out.lastSendDay) + ' is the last day that would still meet the legal deadline.</p>';
+  if (legalDiffers(out)) html += '<p class="legal-limit" id="legal-limit">' + prettyLong(legalLimit(out)) + ' is the last day that would still meet the legal deadline' + (out.lastSendDayLiteral ? ' as written in s. 44 (5)' : '') + '.</p>';
+  if (out.lastSendDayLiteral) html += '<p class="legal-limit" id="authors-reading">' + prettyLong(out.lastSendDay) + ' could also work, but only on the author\'s reading that Legislation Act s. 89 (1) moves the ' + (L.parseISO(out.lastNoticeDayLiteral).m === 1 ? 'January 1' : 'February 1') + ' date to ' + pretty(out.lastNoticeDay) + '. No tribunal or court decision applying that reading is cited, so this page does not advise relying on it.</p>';
+  const alt = out.literalAlternative;
+  if (alt && alt.termination !== out.termination) html += '<p class="legal-limit" id="literal-alternative">This end date relies on the author\'s reading of Legislation Act s. 89 (1). On the literal s. 44 (5) date, notice that counts on ' + pretty(out.notice) + ' ' + (alt.valid ? 'would end the tenancy on ' + pretty(alt.termination) : 'would be too late for ' + pretty(out.termination) + (alt.fallback ? ', and the next monthly date to check would be ' + pretty(alt.fallback) : '')) + '. The safer plan is to give notice earlier.</p>';
   return html;
 }
 function whyNote(out) {
@@ -94,7 +99,11 @@ function methodsNote(out) {
   return '<p class="note" id="by-method"><strong>Same end date, every method.</strong> To end on ' + pretty(out.termination) + ', the last day to send that you can actually use is: ' +
     out.byMethod.map((x) => {
       const day = x.lastPracticalSendDay || x.lastSendDay;
-      const extra = x.lastPracticalSendDay && x.lastPracticalSendDay !== x.lastSendDay ? ' (legal limit ' + pretty(x.lastSendDay) + ')' : '';
+      const lim = x.lastSendDayLiteral || x.lastSendDay;
+      const bits = [];
+      if (x.lastPracticalSendDay && x.lastPracticalSendDay !== lim) bits.push('legal limit ' + pretty(lim));
+      if (x.lastSendDayLiteral) bits.push(pretty(x.lastSendDay) + ' on the author\'s reading only');
+      const extra = bits.length ? ' (' + bits.join('; ') + ')' : '';
       return (x.method === out.delivery ? '<strong>' : '') + name[x.method] + ' ' + pretty(day) + extra + (x.method === out.delivery ? '</strong>' : '');
     }).join("; ") + '.</p>';
 }
@@ -110,6 +119,7 @@ function render(out) {
   $("actions").hidden = !out.valid;
   if (out.error) {
     $("result").innerHTML = '<div class="error"><strong>Check one detail.</strong><p>' + out.error + '</p></div>';
+    $("live-summary").textContent = "Check one detail. " + out.error;
     $("draft").textContent = "";
     return;
   }
@@ -128,7 +138,7 @@ function render(out) {
   html += '<p>' + out.message + '</p>';
   (out.notes || []).forEach((n) => { html += '<p class="note">' + n + '</p>'; });
   if (!late) {
-    html += '<div class="deadline"><span>LAST DAY TO ' + (out.delivery === "hand" ? "GIVE" : "SEND") + ' IT THIS WAY</span><strong>' + prettyLong(advisedDay(out)) + '</strong><small>' + (legalDiffers(out) ? 'Legal limit ' + prettyLong(out.lastSendDay) + '. ' : '') + 'For notice that counts by ' + pretty(out.lastNoticeDay) + '</small></div>';
+    html += '<div class="deadline"><span>LAST DAY TO ' + (out.delivery === "hand" ? "GIVE" : "SEND") + ' IT THIS WAY</span><strong>' + prettyLong(advisedDay(out)) + '</strong><small>' + (legalDiffers(out) ? 'Legal limit ' + prettyLong(legalLimit(out)) + '. ' : '') + (out.lastSendDayLiteral ? prettyLong(out.lastSendDay) + ' on the author\'s reading only. ' : '') + 'For notice that counts by ' + pretty(out.lastSendDayLiteral ? out.lastNoticeDayLiteral : out.lastNoticeDay) + '</small></div>';
     html += '<ol class="timeline">' + steps.map((s) => '<li><span>' + s[0] + '</span><strong>' + s[1] + '</strong></li>').join("") + '</ol>';
     if (out.valid) html += methodsNote(out);
     html += whyNote(out) + deadlineNote(out);
@@ -147,6 +157,8 @@ function render(out) {
   }
   html += '<a class="official-link" href="https://tribunalsontario.ca/documents/ltb/Notices%20of%20Termination%20%26%20Instructions/N9.pdf">Open official Form N9 <span aria-hidden="true">↗</span></a>';
   $("result").innerHTML = html;
+  // Only the decision and the limits are announced, not the whole result, so a change is short to hear.
+  $("live-summary").textContent = ["decision", "legal-limit", "authors-reading", "literal-alternative"].map((id) => $(id)).filter(Boolean).map((el) => el.textContent).join(" ");
   $("draft").textContent = draftText(out);
   const use = $("use-monthly");
   if (use) use.addEventListener("click", () => { $("kind").value = "monthly"; toggleRows(); run(); });

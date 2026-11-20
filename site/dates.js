@@ -62,39 +62,44 @@
   // s. 44 (5): applies to monthly, yearly and fixed-term notices, never to daily or weekly ones.
   // Its two deadlines are fixed dates: "not later than January 1" for the end of February and "February 1"
   // for the end of March. Legislation Act, 2006, s. 89 (1): "Time limits that would otherwise expire on a
-  // holiday are extended to include the next day that is not a holiday." A holiday there is a Sunday or a
-  // day on the s. 88 list (s. 87), not a Saturday. January 1 is always New Year's Day, so the February
-  // deadline always reaches at least January 2. See specialDeadline().
-  function specialDeadline(term) {
-    const raw = isLastDayOfFebruary(term) ? make(term.y, 1, 1) : isLastDayOfMarch(term) ? make(term.y, 2, 1) : null;
-    return raw ? s89Extend(raw) : null;
+  // holiday are extended to include the next day that is not a holiday." Section 87 says a holiday is a
+  // holiday as described in s. 88; s. 88 (2) lists Sunday and the named days. Saturday is not on the list.
+  // January 1 is always New Year's Day, so on this reading the February deadline reaches at least January 2.
+  // That extension is the author's reading of the statutes, not an adjudicated rule, so every caller can
+  // also ask for the literal date written in s. 44 (5) (literal === true). See specialDeadline().
+  function specialDeadlineRaw(term) {
+    return isLastDayOfFebruary(term) ? make(term.y, 1, 1) : isLastDayOfMarch(term) ? make(term.y, 2, 1) : null;
   }
-  function specialAllows(notice, term, kind) {
+  function specialDeadline(term, literal) {
+    const raw = specialDeadlineRaw(term);
+    return raw ? (literal ? raw : s89Extend(raw)) : null;
+  }
+  function specialAllows(notice, term, kind, literal) {
     if (kind === "weekly" || kind === "daily") return false;
-    const dl = specialDeadline(term);
+    const dl = specialDeadline(term, literal);
     return dl ? lte(notice, dl) : false;
   }
   function minDaysFor(kind) { return kind === "weekly" || kind === "daily" ? 28 : 60; }
 
   // Latest day notice can be given (served) for a termination date.
-  function lastOrdinaryNoticeDay(term, minDays, kind) {
+  function lastOrdinaryNoticeDay(term, minDays, kind, literal) {
     const ordinary = addDays(term, -minDays);
     if (kind !== "weekly" && kind !== "daily") {
-      const dl = specialDeadline(term);
+      const dl = specialDeadline(term, literal);
       if (dl) return gte(dl, ordinary) ? dl : ordinary;
     }
     return ordinary;
   }
-  function isTermValid(notice, term, minDays, kind) {
+  function isTermValid(notice, term, minDays, kind, literal) {
     if (daysBetween(notice, term) >= minDays) return { ok: true, usedSpecial: false };
-    if (specialAllows(notice, term, kind)) return { ok: true, usedSpecial: true };
+    if (specialAllows(notice, term, kind, literal)) return { ok: true, usedSpecial: true };
     return { ok: false, usedSpecial: false };
   }
 
-  function earliestMonthly(notice, dueDay, minDays) {
+  function earliestMonthly(notice, dueDay, minDays, literal) {
     let cursor = periodEndOnOrAfter(addDays(notice, 1), dueDay);
     for (let i = 0; i < 6; i++) {
-      const check = isTermValid(notice, cursor, minDays, "monthly");
+      const check = isTermValid(notice, cursor, minDays, "monthly", literal);
       if (check.ok) return { t: cursor, special: check.usedSpecial };
       cursor = nextPeriodEndAfter(cursor, dueDay);
     }
@@ -148,12 +153,18 @@
     add(make(y, 12, 26), "Boxing Day", S88);
     if (weekday(xmas) === 6) add(make(y, 12, 27), "Monday after Christmas Day", "Legislation Act, 2006, s. 88 (5)");
     if (weekday(xmas) === 0) add(make(y, 12, 27), "Tuesday after Christmas Day", "Legislation Act, 2006, s. 88 (5)");
+    // Boxing Day on a Saturday or Sunday has no substitute day in s. 88, but Canada Post and many offices
+    // close on Monday or Tuesday, December 28. The Board's own closure is not confirmed, so this is an
+    // assumed closure, UNKNOWN, counted as closed like Civic Holiday. That can only make a courier date
+    // count later and the send by day earlier.
+    const boxing = make(y, 12, 26);
+    if (weekday(boxing) === 6 || weekday(boxing) === 0) add(make(y, 12, 28), "Boxing Day observed", "Not on the s. 88 list; Canada Post is closed this day; treated as a possible Board office closure, to be safe", "assumed");
     list.sort((p, q) => (p.date < q.date ? -1 : 1));
     holidayCache[y] = list;
     return list;
   }
-  // Legislation Act, 2006, ss. 87 to 89: a holiday is a Sunday or a day on the s. 88 list. Saturdays and
-  // Civic Holiday are not holidays there. s89Extend(d) is d, or the next day that is not such a holiday.
+  // Legislation Act, 2006, ss. 87 to 89: s. 87 points to s. 88, and s. 88 (2) lists Sunday and the named
+  // days. Saturdays, Civic Holiday and Boxing Day observed are not holidays there. s89Extend(d) is d, or the next day that is not such a holiday.
   function isLegislationHoliday(dt) { const h = holidayOn(dt); return weekday(dt) === 0 || Boolean(h && h.kind === "statutory"); }
   function s89Extend(dt) { let d = dt; while (isLegislationHoliday(d)) d = addDays(d, 1); return d; }
   // LTB rule 1.14 reads the same way with the rule 1.1 holidays, which add Saturdays and unknown office closures.
@@ -251,14 +262,25 @@
   function prettyLong(dt) { return WEEKDAYS[weekday(dt)] + ", " + MONTHS[dt.m - 1] + " " + dt.d + ", " + dt.y; }
   function sendAdvice(legal, practical, method) {
     if (cmp(legal, practical) === 0) return null;
-    const cp = canadaPostHolidayOn(legal);
-    if (method === "mail" && (cp || isWeekend(legal))) {
-      const why = cp ? ("Canada Post is closed that day for " + cp.name + ". The official holiday schedule, read on 19 November 2026, says there is no regular collection or delivery of mail on that day.")
-        : ("That last day is a " + WEEKDAYS[weekday(legal)] + ", and Canada Post does not make regular collection or delivery on Saturday or Sunday.");
-      return prettyLong(legal) + " is the last day that would still meet the legal deadline, but " + why + " This page therefore advises mailing by " + prettyLong(practical) + ".";
+    if (method === "mail") {
+      const closedDays = [];
+      for (let d = addDays(practical, 1); cmp(d, legal) <= 0; d = addDays(d, 1)) {
+        const h = canadaPostHolidayOn(d);
+        if (h) closedDays.push(prettyLong(d) + " (" + h.name + ")");
+      }
+      const why = (isWeekend(legal) ? "that day is a " + WEEKDAYS[weekday(legal)] + ". " : "") + (closedDays.length
+        ? (isWeekend(legal) ? "Also, " : "") + "Canada Post's official holiday schedule, read on 19 November 2026, lists " + closedDays.join(" and ") + " as closed, with no collection or delivery of mail."
+        : "");
+      return "Mailing as late as " + prettyLong(legal) + " could still meet the deadline, but " + why +
+        " The schedule does not promise weekend collection, and post offices run by a private business inside a store follow the store's hours, so mail left there on a weekend or holiday may not move until the next business day. This page therefore advises mailing by " + prettyLong(practical) +
+        ", the last weekday before that which is not on the Canada Post closure list. Ask the counter for a dated receipt as proof of the mailing date.";
     }
     if (method === "courier") {
-      return prettyLong(legal) + " is the last day that would still meet the legal deadline, but many couriers do not pick up on a weekend or public holiday. This page therefore advises handing it to a courier by " + prettyLong(practical) + ".";
+      const sat = addDays(legal, -1);
+      const satNote = weekday(legal) === 0 && cmp(sat, practical) > 0
+        ? " A hand off on " + prettyLong(sat) + " would also count on the same day, if your courier picks up on Saturdays."
+        : "";
+      return prettyLong(legal) + " is the last day that would still meet the legal deadline, but this page assumes the courier does not pick up on a Saturday, Sunday or public holiday." + satNote + " This page therefore advises handing it to a courier by " + prettyLong(practical) + ". Keep the courier's dated receipt.";
     }
     return null;
   }
@@ -317,6 +339,7 @@
     const dayOpts = input.weekendsOnly ? { closures: false } : input.statutoryOnly ? { assumed: false } : undefined;
     const notice = deemedGiven(sent, method, dayOpts);
     const minDays = minDaysFor(kind);
+    const literalOnly = input.literalOnly === true;
     const out = { sent: toISO(sent), notice: toISO(notice), delivery: method, kind: kind, minDays: minDays, notes: [] };
     if (method === "courier") out.courierSkipped = courierSkipped(sent, dayOpts);
 
@@ -325,10 +348,24 @@
       const last = lastOrdinaryNoticeDay(term, minDays, kind);
       out.lastNoticeDay = toISO(last);
       out.lastSendDay = toISO(latestSendFor(last, method));
-      const legal = parseISO(out.lastSendDay), practical = lastPracticalSendFor(legal, method);
+      // The literal s. 44 (5) date, without the s. 89 (1) extension. When the two differ, the page leads with
+      // a send day that meets the literal date, and shows the extended day only as the author's reading.
+      const lastLiteral = lastOrdinaryNoticeDay(term, minDays, kind, true);
+      const extendedSend = parseISO(out.lastSendDay);
+      let legal = extendedSend;
+      if (cmp(lastLiteral, last) !== 0 && lte(notice, lastLiteral)) {
+        out.lastNoticeDayLiteral = toISO(lastLiteral);
+        legal = latestSendFor(lastLiteral, method);
+        if (cmp(legal, extendedSend) !== 0) out.lastSendDayLiteral = toISO(legal);
+      }
+      const practical = lastPracticalSendFor(legal, method);
       out.lastPracticalSendDay = toISO(practical);
       out.lastWorkingSendDay = cmp(practical, legal) !== 0 ? toISO(practical) : undefined;
-      const advice = sendAdvice(legal, practical, method);
+      let advice = sendAdvice(legal, practical, method);
+      if (advice && out.lastSendDayLiteral && method === "mail") {
+        const cpx = canadaPostHolidayOn(extendedSend);
+        if (cpx) advice += " " + prettyLong(extendedSend) + ", the later day on the author's reading of s. 89 (1), is also a Canada Post closure (" + cpx.name + ").";
+      }
       if (advice) out.sendDayNote = advice;
       out.daysOfNotice = daysBetween(notice, term);
       out.usedSpecial = special;
@@ -343,8 +380,10 @@
       }
       // The same end date by every method, so the difference between methods is visible at once.
       out.byMethod = ["hand", "mail", "courier", "email"].map((m) => {
-        const Lday = latestSendFor(last, m), Pday = lastPracticalSendFor(Lday, m);
-        return { method: m, lastSendDay: toISO(Lday), lastPracticalSendDay: toISO(Pday) };
+        const Lday = latestSendFor(last, m), Rday = latestSendFor(lastLiteral, m), Pday = lastPracticalSendFor(Rday, m);
+        const row = { method: m, lastSendDay: toISO(Lday), lastPracticalSendDay: toISO(Pday) };
+        if (cmp(Rday, Lday) !== 0) row.lastSendDayLiteral = toISO(Rday);
+        return row;
       });
       return out;
     }
@@ -352,6 +391,12 @@
     function extras() {
       if (input.noExtras) return out;
       const base = Object.assign({}, input, { rent: "", noExtras: true });
+      // When this notice reaches its end date only through the s. 89 (1) extension, say what the literal
+      // s. 44 (5) text would give, so a renter can choose the safer reading.
+      if (out.deadlineExtended && out.deadlineExtended.usedByThisNotice) {
+        const lit = compute(Object.assign({}, base, { literalOnly: true }));
+        out.literalAlternative = { valid: lit.valid, termination: lit.termination, fallback: lit.fallback ? lit.fallback.termination : null };
+      }
       if (method === "courier") {
         const plain = deemedGiven(sent, method, { assumed: false });
         if (cmp(plain, notice) !== 0) {
@@ -398,7 +443,7 @@
           out.notes.push("This end date is not the day before your rent day. Most leases end the day before rent would next be due. Check the end date written in your lease before you use it on Form N9.");
         }
       }
-      const check = isTermValid(notice, expiry, minDays, "fixed");
+      const check = isTermValid(notice, expiry, minDays, "fixed", literalOnly);
       finish(expiry, check.usedSpecial);
       out.valid = check.ok;
       if (!check.ok) {
@@ -432,7 +477,7 @@
     }
     const due = Number(input.dueDay);
     if (!Number.isInteger(due) || due < 1 || due > 31) return { error: "Enter the day of the month rent is due, from 1 to 31." };
-    const e = earliestMonthly(notice, due, minDays);
+    const e = earliestMonthly(notice, due, minDays, literalOnly);
     finish(e.t, e.special); out.valid = true;
     out.message = e.special
       ? "This date uses the February and March rule in section 44 (5), so less than 60 days counts as enough."
@@ -453,15 +498,16 @@
       { page: 3, field: "Signature: Tenant or Representative", fill: "Tick the box that applies" },
       { page: 3, field: "First Name, Last Name, Phone Number", fill: "The person signing" },
       { page: 3, field: "Signature and Date (dd/mm/yyyy)", fill: "Sign and date the form" },
-      { page: 0, field: (out.delivery === "hand" ? "Give" : "Send") + " it by", fill: n9Date(out.lastPracticalSendDay || out.lastSendDay) + " (" + DELIVERY[out.delivery].label + (out.lastPracticalSendDay && out.lastPracticalSendDay !== out.lastSendDay ? "; legal limit " + n9Date(out.lastSendDay) : "") + ")" }
+      { page: 0, field: (out.delivery === "hand" ? "Give" : "Send") + " it by", fill: n9Date(out.lastPracticalSendDay || out.lastSendDay) + " (" + DELIVERY[out.delivery].label + (out.lastPracticalSendDay && out.lastPracticalSendDay !== (out.lastSendDayLiteral || out.lastSendDay) ? "; legal limit " + n9Date(out.lastSendDayLiteral || out.lastSendDay) : "") + ")" }
     ];
   }
 
   // A small calendar file so the last send day lands in the renter's own calendar.
   function reminderICS(out, stamp) {
     if (!out || !out.valid) return "";
-    const d = out.lastSendDay.replace(/-/g, "");
-    const end = toISO(addDays(parseISO(out.lastSendDay), 1)).replace(/-/g, "");
+    const day = out.lastPracticalSendDay || out.lastSendDay;
+    const d = day.replace(/-/g, "");
+    const end = toISO(addDays(parseISO(day), 1)).replace(/-/g, "");
     const lines = [
       "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//John Khan//Lease Exit Timer//EN", "CALSCALE:GREGORIAN",
       "BEGIN:VEVENT",
@@ -481,7 +527,7 @@
     pad, make, toISO, parseISO, addDays, weekday, lastDayOfMonth, daysInMonth, daysBetween,
     isLastDayOfFebruary, isLastDayOfMarch, periodEndOnOrAfter, lastOrdinaryNoticeDay, isTermValid,
     earliestMonthly, earliestWeekly, earliestDaily, deemedGiven, latestSendFor, DELIVERY, compute, reminderICS, cmp,
-    holidaysIn, holidayOn, isCourierHoliday, isLegislationHoliday, s89Extend, rule114Extend, specialDeadline, courierSkipped, easterSunday, n9Checklist, n9Date, monthsBetween, canadaPostHolidaysIn, canadaPostHolidayOn, isCanadaPostClosed, lastPracticalSendFor, prettyLong
+    holidaysIn, holidayOn, isCourierHoliday, isLegislationHoliday, s89Extend, rule114Extend, specialDeadline, courierSkipped, easterSunday, n9Checklist, n9Date, monthsBetween, canadaPostHolidaysIn, canadaPostHolidayOn, isCanadaPostClosed, lastPracticalSendFor, prettyLong, specialDeadline, lastOrdinaryNoticeDay
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   root.LeaseDates = api;

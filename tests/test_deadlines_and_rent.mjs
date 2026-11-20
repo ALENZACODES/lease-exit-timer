@@ -90,16 +90,16 @@ eq("Canada Post closed Boxing Day observed 2026", [L.canadaPostHolidayOn(D("2026
 eq("Canada Post closed New Year's Day 2027", L.canadaPostHolidayOn(D("2027-01-01")).name, "New Year's Day");
 eq("Canada Post closed Boxing Day observed 2027", L.canadaPostHolidayOn(D("2027-12-28")).name, "Boxing Day");
 eq("Family Day is not a Canada Post closure", L.canadaPostHolidayOn(D("2026-02-16")), null);
-eq("Canada Post closed on Saturdays", L.isCanadaPostClosed(D("2026-12-26")), true);
+eq("Saturday is not counted as a Canada Post mailing day", L.isCanadaPostClosed(D("2026-12-26")), true);
 const mail28 = M("2026-11-28", { delivery: "mail" });
-eq("legal mail day stays December 28", mail28.lastSendDay, "2026-12-28");
+eq("December 28 is the mail day only on the author's reading", [mail28.lastSendDay, mail28.lastSendDayLiteral], ["2026-12-28", "2026-12-27"]); // round 7
 eq("practical mail day is December 24", mail28.lastPracticalSendDay, "2026-12-24");
-eq("mail note names Boxing Day and no collection", mail28.sendDayNote.includes("Boxing Day") && mail28.sendDayNote.includes("no regular collection") && mail28.sendDayNote.includes("Thursday, December 24, 2026"), true);
+eq("mail note names Boxing Day and no collection", mail28.sendDayNote.includes("Boxing Day") && mail28.sendDayNote.includes("no collection or delivery of mail") && mail28.sendDayNote.includes("Thursday, December 24, 2026"), true);
 eq("mailing on December 24 still reaches February 28", M("2026-12-24", { delivery: "mail" }).termination, "2027-02-28");
 eq("mailing on December 29 misses February", M("2026-12-29", { delivery: "mail" }).termination, "2027-03-31");
 eq("decision sentence uses the practical day with a weekday", app.includes("prettyLong(advisedDay(out))") && app.includes('id="legal-limit"'), true);
-eq("deadline note quotes s. 89 (1)", app.includes("Time limits that would otherwise expire on a holiday are extended to include the next day that is not a holiday") && app.includes("Every provision of this Part applies to every Act and regulation") && app.includes("not an adjudicated interpretation"), true);
-eq("UNKNOWN claim is limited to listed weekdays", app.includes("For those listed weekdays") && app.includes("The list does not include every possible closure") && app.includes("Monday, December 28 is not skipped here for courier service"), true);
+eq("deadline note quotes s. 89 (1)", app.includes("Time limits that would otherwise expire on a holiday are extended to include the next day that is not a holiday") && app.includes("Every provision of this Part applies to every Act and regulation") && app.includes("not an adjudicated interpretation") && app.includes("author\\'s reading"), true);
+eq("UNKNOWN claim is limited to listed weekdays", app.includes("For the listed weekdays") && app.includes("The list does not include every possible closure") && app.includes("so that day is listed as UNKNOWN and counted as closed too"), true); // round 7: December 28 is now counted as closed for courier
 const cou = L.compute({ noticeDate: "2026-12-31", kind: "monthly", dueDay: 1, delivery: "courier" });
 eq("courier legal day can be a Sunday", [cou.lastSendDay, cou.lastPracticalSendDay], ["2027-01-31", "2027-01-29"]);
 eq("every-method line shows the practical mail day", mail28.byMethod.find((x) => x.method === "mail").lastPracticalSendDay, "2026-12-24");

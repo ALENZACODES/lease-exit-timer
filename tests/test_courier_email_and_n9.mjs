@@ -39,8 +39,8 @@ eq("saturday is a holiday under rule 1.1", L.isCourierHoliday(L.parseISO("2026-1
 
 // Courier regressions. The weekend only engine said these counted on a holiday.
 const xmas = L.compute({ noticeDate: "2026-12-24", kind: "monthly", dueDay: 1, delivery: "courier" });
-eq("courier dec 24 2026 skips christmas, boxing day and sunday", xmas.notice, "2026-12-28");
-eq("courier dec 24 2026 lists the skipped days", xmas.courierSkipped.map((h) => h.name).join(","), "Christmas Day,Saturday (Boxing Day),Sunday"); // round 4: a Saturday on the s. 88 list is shown as a weekend day
+eq("courier dec 24 2026 skips christmas, boxing day, sunday and boxing day observed", xmas.notice, "2026-12-29"); // round 7: Monday, December 28 is an UNKNOWN Board closure, counted as closed
+eq("courier dec 24 2026 lists the skipped days", xmas.courierSkipped.map((h) => h.name).join(","), "Christmas Day,Saturday (Boxing Day),Sunday,Boxing Day observed"); // round 4: a Saturday on the s. 88 list is shown as a weekend day
 const ny = L.compute({ noticeDate: "2026-12-31", kind: "monthly", dueDay: 1, delivery: "courier" });
 eq("courier dec 31 2026 counts on jan 4 2027", ny.notice, "2027-01-04");
 eq("so february 28 is no longer reachable", ny.termination, "2027-03-31");
@@ -53,7 +53,7 @@ eq("courier nov 10 2026 skips remembrance day", iso(rem), "2026-11-12");
 const gf = L.deemedGiven(L.parseISO("2027-03-25"), "courier");
 eq("courier before easter 2027 skips good friday to easter monday", iso(gf), "2027-03-30");
 const x27 = L.deemedGiven(L.parseISO("2027-12-24"), "courier");
-eq("courier dec 24 2027 skips to tuesday dec 28", iso(x27), "2027-12-28");
+eq("courier dec 24 2027 skips to wednesday dec 29", iso(x27), "2027-12-29"); // round 7: Tuesday, December 28, 2027 is Boxing Day observed, an UNKNOWN closure counted as closed
 eq("mail is not moved by holidays (s. 191 (3))", L.compute({ noticeDate: "2026-12-20", kind: "monthly", dueDay: 1, delivery: "mail" }).notice, "2026-12-25");
 
 // Email needs written consent that covers a notice to end the tenancy.

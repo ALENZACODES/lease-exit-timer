@@ -1,12 +1,12 @@
 {
   "name": "lease-exit-timer",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Ontario tenant notice dates with delivery time counted and official sources beside the result.",
   "author": "John Khan",
   "license": "MIT",
   "private": true,
   "scripts": {
-    "test": "node tests/test_dates.mjs && node tests/test_delivery.mjs && node tests/test_courier_email_and_n9.mjs && node tests/test_statutory_service_and_n9.mjs && node tests/test_closures_methods_and_limits.mjs && node tests/test_deadlines_and_rent.mjs && node tests/test_property.mjs",
+    "test": "node tests/test_dates.mjs && node tests/test_delivery.mjs && node tests/test_courier_email_and_n9.mjs && node tests/test_statutory_service_and_n9.mjs && node tests/test_closures_methods_and_limits.mjs && node tests/test_deadlines_and_rent.mjs && node tests/test_literal_deadline_and_closures.mjs && node tests/test_property.mjs",
     "start": "python3 -m http.server 8080 --directory site"
   }
 }

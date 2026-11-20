@@ -22,29 +22,37 @@ In Ontario, ending a monthly lease usually takes at least 60 days of notice on o
 
 ### What is different
 
-Form N9 mailed on Saturday, November 28, 2026: a generic "60 days from today" count lands on January 27, 2027, so January 31 looks fine. This page counts the notice on December 3, which leaves 59 days, so the earliest end is February 28, 2027, and the last day to mail for January 31 was November 27. The decision is a practical send by day: "Send Form N9 by Canada Post by Thursday, December 24, 2026 to end your tenancy on February 28, 2027." Under it is the legal limit, Monday, December 28, 2026. Canada Post is closed that day (Boxing Day observed). Mailing on December 24 still reaches February 28; mailing on December 29 misses it.
+Form N9 mailed on Saturday, November 28, 2026: a generic "60 days from today" count lands on January 27, 2027, so January 31 looks fine. This page counts the notice on December 3, which leaves 59 days, so the earliest end is February 28, 2027, and the last day to mail for January 31 was November 27. The decision is a practical send by day: "Send Form N9 by Canada Post by Thursday, December 24, 2026 to end your tenancy on February 28, 2027." Under it is the legal limit on the literal January 1 date in s. 44 (5): Sunday, December 27, 2026. Monday, December 28 is shown on its own line as working only on the author's reading of Legislation Act s. 89 (1), and Canada Post is closed that day anyway (Boxing Day observed).
 
 ### What it does
 
 Enter the send day, the kind of tenancy, the rent day (with a note to check the rental period in the lease), and how the notice will reach the landlord: by hand or mail box, Canada Post, courier, or email with written consent. Optionally add the rent, to show what one late day would cost.
 
-The result opens with the practical send by day and the end date. When that day is earlier than the legal limit, the legal limit sits under the sentence. Then come the last day for every method, a short timeline, and a "Why this date" section. Mail uses its own Canada Post closure calendar, taken from the official holiday schedule (read 19 November 2026, America/Toronto): in this window, December 25, December 28 (Boxing Day observed) and January 1. Courier still uses weekends, Legislation Act s. 88 holidays and Civic Holiday. December 28 is not skipped for courier unless the Board is confirmed closed. Weekday Board closures are labelled UNKNOWN. Deadline extensions quote Legislation Act s. 89 (1) ("Time limits that would otherwise expire on a holiday are extended to include the next day that is not a holiday") and s. 87, and are labelled as the author's reading, not an adjudicated result.
+The result opens with the practical send by day and the end date. When that day is earlier than the legal limit, the legal limit sits under the sentence. Then come the last day for every method, a short timeline, and a "Why this date" section.
+
+The advised day always meets the literal January 1 and February 1 dates in s. 44 (5). Legislation Act s. 89 (1) says "Time limits that would otherwise expire on a holiday are extended to include the next day that is not a holiday." Whether that moves these fixed dates has not been decided in any case I can cite, so a later day that depends on it is shown on its own line as the author's reading, and a notice that only works on that reading gets the literal result beside it. LTB rule 1.15 lets a notice be delivered on a holiday, so notice by hand on January 1 itself needs no extension.
+
+Mail uses its own Canada Post closure calendar, taken from the official holiday schedule (read 19 November 2026, America/Toronto): in this window, December 25, December 28 (Boxing Day observed) and January 1. The schedule does not promise weekend collection, so weekends are not counted as mailing days, and the page advises a dated receipt. Courier skips weekends, the Legislation Act s. 88 holidays, Civic Holiday, and December 28 when Boxing Day falls on a weekend. Weekday Board closures are labelled UNKNOWN and counted as closed, which can only make the advised day earlier. The courier advice says it assumes no Saturday pickup.
 
 A Form N9 checklist and the sources sit beside the result. Nothing typed leaves the browser.
 
 ### How I built it
 
-Plain HTML, CSS and JavaScript. The date engine in `site/dates.js` is shared by the page and the tests. Penn Blue #011F5B and Penn Red #990000. Built by John Khan, Toronto, Ontario, a current student, solo, for the Silicon Valley Buildathon. MIT licence.
+Plain HTML, CSS and JavaScript. The date engine in `site/dates.js` is shared by the page and the tests. Penn Blue #011F5B and Penn Red #990000. Built by John Khan, Toronto, Ontario, solo, for the Silicon Valley Buildathon, under my personal GitHub handle ALENZACODES. MIT licence.
 
 ### What I tested, and what testing changed
 
-`npm test` has 27 date checks, 31 delivery, 55 courier, email and N9, 53 statutory service and N9, 40 closures, methods and limits, 59 deadline and rent, and a separate oracle of 111,036 cases plus 1,461 courier hand offs and 4 holiday tables, all passing. The test files are named by feature. A browser check runs axe-core under WCAG 2.2 AA rules and tests every published link. Formal user testing has not been done. A keyboard and screen reader pass is in `docs/TESTING.md`, labelled as a self check, not a user study.
+The first brute force check walked every day from 2026 to 2029 for 20,454 cases and found 1,650 failures, two real date errors (section 1 of `docs/TESTING.md`). Six rounds of outside document review followed, and each one changed the build; the last changed how the page treats the s. 89 (1) extension and December 28.
+
+`npm test` has 27 date checks, 31 delivery, 55 courier, email and N9, 53 statutory service and N9, 40 closures, methods and limits, 59 deadline and rent, 87 literal deadline and closures, and a separate oracle of 111,036 cases plus 1,461 courier hand offs and 4 holiday tables, all passing. A browser check at desktop and phone width runs axe-core under WCAG 2.2 AA and best practice rules with no violations, and every published link returns HTTP 200. I also did a keyboard and accessibility tree self check. No screen reader software was used, and that check is not a screen reader test. No renter has used the page in a recorded session, and nothing here claims a user study.
 
 ### Video
 
 https://youtu.be/AasmHYBD09k
 
-The video predates every outside review. It does not show the later calendar work, the practical send by day, or the Canada Post closures. The live page, the screenshots and the GIF do. The video and its YouTube link are unchanged. No new video was recorded.
+The video was recorded at commit `2746fc3`, before every outside review, and it is kept unchanged. It does not show the later calendar work, the practical send by day, the Canada Post closures or the literal deadline line. The live page, the screenshots and the current build GIF do.
+
+Erratum: the video's closing card calls 81,816 cases the first brute force run. The first run was 20,454 cases, with 1,650 failures. 81,816 is the number the fixed engine passed once four delivery methods were added.
 
 ## Built with
 
@@ -58,7 +66,7 @@ Source: https://github.com/ALENZACODES/lease-exit-timer
 
 ## Gallery
 
-1. `docs/screenshots/10-current-build.gif`: silent before, failure, fix capture of the November 28 mail boundary and the courier holiday correction. A generic 60 day count from November 28 makes January 31 look fine; mail is deemed served on December 3, so January 31 is already lost; the page now says mail by Thursday, December 24, with the legal limit Monday, December 28, when Canada Post is closed for Boxing Day observed; then courier, where Sunday, January 31 is the legal limit and Friday, January 29 is the practical send by day. Made by automated browser capture, no voice. A gallery image, not a new video.
+1. `docs/screenshots/10-current-build.gif`: a silent 24 second capture of v1.6.0 doing one full task. Open the page, type Saturday, November 28, 2026 and choose Canada Post: mail by Thursday, December 24, legal limit Sunday, December 27. Then the same end date by every method, then a courier hand off on Thursday, December 31: send by Friday, January 29, legal limit Sunday, January 31. Made by automated browser capture, no voice. A gallery image, not a new video.
 2. `docs/screenshots/00-before-after.png`: the same November 28 mail input, generic 60 day count against this page (also the thumbnail)
 3. `docs/screenshots/02-mail.png`: mail moves the end date a month, with the every method line and the rent estimate
 4. `docs/screenshots/08-civic-holiday.png`: a weekday closure that changes the end date, marked UNKNOWN and said plainly
@@ -73,8 +81,8 @@ Source: https://github.com/ALENZACODES/lease-exit-timer
 ## Additional questions the form may ask
 
 - **Problem or creative goal:** see "The problem" above.
-- **Demo or visual walkthrough of the core feature:** the video above, plus the live link. The video predates every outside review.
+- **Demo or visual walkthrough of the core feature:** the video above (recorded before every outside review, with the erratum above), the current build GIF, and the live link.
 - **What you built and tested:** see "What I tested, and what testing changed".
-- **Eligibility:** the entrant, John Khan, is a current student.
+- **Eligibility:** the entrant, John Khan, is a current student, is above the age of majority in Ontario, Canada, where he lives, and entered solo. ALENZACODES is his personal GitHub handle, not a company or professional organization. The project was built during the event, starting 9 November 2026.
 - **Reused tools and assets:** none ship in the page. Test tools: Playwright, axe-core. Hosting: GitHub Pages.
 - **Team member contributions:** John Khan, everything (solo).

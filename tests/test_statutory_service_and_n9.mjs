@@ -25,7 +25,7 @@ eq("new year 2027 is statutory", kindOf("2027-01-01"), "statutory");
 eq("monday after christmas 2027 is statutory, s. 88 (5)", kindOf("2027-12-27"), "statutory");
 eq("civic holiday 2027 is assumed", kindOf("2027-08-02"), "assumed");
 eq("civic holiday source says not statutory", L.holidayOn(L.parseISO("2027-08-02")).source.startsWith("Not a statutory holiday"), true);
-eq("only civic holiday is assumed", [2026, 2027, 2028, 2029].map((y) => L.holidaysIn(y).filter((h) => h.kind === "assumed").map((h) => h.name).join()), ["Civic Holiday", "Civic Holiday", "Civic Holiday", "Civic Holiday"]);
+eq("only civic holiday and boxing day observed are assumed", [2026, 2027, 2028, 2029].map((y) => L.holidaysIn(y).filter((h) => h.kind === "assumed").map((h) => h.name).join()), ["Civic Holiday,Boxing Day observed", "Civic Holiday,Boxing Day observed", "Civic Holiday", "Civic Holiday"]); // round 7: December 28 when Boxing Day falls on a weekend
 eq("civic holiday counted by default", L.isCourierHoliday(L.parseISO("2027-08-02")), true);
 eq("civic holiday left out on request", L.isCourierHoliday(L.parseISO("2027-08-02"), { assumed: false }), false);
 eq("statutory holiday never left out", L.isCourierHoliday(L.parseISO("2027-01-01"), { assumed: false }), true);
@@ -90,10 +90,11 @@ eq("rent field on the page", page.includes('id="rent"') && page.includes("(optio
 
 // Self walkthrough fix: a last send day on a weekend or statutory holiday gets the last working day.
 eq("courier last send day sunday", [dec31.lastSendDay, dec31.lastWorkingSendDay], ["2027-01-31", "2027-01-29"]);
-// The s. 89 (1) extension makes the last legal mail day Monday, December 28, 2026, but Canada Post is closed
-// that day (Boxing Day observed). The advised send day is Thursday, December 24, 2026.
+// The literal January 1 date in s. 44 (5) makes the last legal mail day Sunday, December 27, 2026. The author's
+// reading of s. 89 (1) would allow Monday, December 28, 2026, but Canada Post is closed that day (Boxing Day
+// observed). The advised send day is Thursday, December 24, 2026.
 { const r = L.compute({ noticeDate: "2026-11-28", kind: "monthly", dueDay: 1, delivery: "mail" });
-  eq("mail last send day over christmas", [r.lastSendDay, r.lastWorkingSendDay, r.lastPracticalSendDay], ["2026-12-28", "2026-12-24", "2026-12-24"]);
+  eq("mail last send day over christmas", [r.lastSendDay, r.lastSendDayLiteral, r.lastWorkingSendDay, r.lastPracticalSendDay], ["2026-12-28", "2026-12-27", "2026-12-24", "2026-12-24"]);
   eq("mail note names Boxing Day and December 24", /Boxing Day/.test(r.sendDayNote) && r.sendDayNote.includes("Thursday, December 24, 2026"), true); }
 eq("weekday last send day has no note", L.compute({ noticeDate: "2026-11-19", kind: "monthly", dueDay: 1, delivery: "mail" }).sendDayNote, undefined);
 eq("hand delivery on a sunday has no note", L.compute({ noticeDate: "2027-01-01", kind: "monthly", dueDay: 1, delivery: "hand" }).sendDayNote, undefined);

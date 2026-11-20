@@ -35,7 +35,7 @@
         </form>
       </section>
       <section class="card output" aria-labelledby="out-title">
-        <p class="step">02 / YOUR DATES</p><h2 id="out-title">A date you can plan around.</h2><div id="result" class="result" role="status" aria-live="polite" aria-atomic="true">Enter a notice date and choose Count my dates.</div>
+        <p class="step">02 / YOUR DATES</p><h2 id="out-title">A date you can plan around.</h2><p id="live-summary" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p><div id="result" class="result">Enter a notice date and choose Count my dates.</div>
         <div id="actions" hidden><div class="actions"><button id="calendar" type="button" class="secondary">Save the last day to my calendar</button><button id="print" type="button" class="text-button">Print this plan</button></div><p class="hint">The calendar file includes a reminder one week before the last send day.</p></div>
         <details id="note-details"><summary>Make a courtesy note</summary><p class="hint">Optional. This note is not Form N9. It does not give notice on its own and nothing here is sent to anyone.</p><div class="row two"><div><label for="landlord">Landlord name</label><input id="landlord" type="text" autocomplete="off" placeholder="Name on the agreement" /></div><div><label for="tenant">Your name</label><input id="tenant" type="text" autocomplete="off" /></div></div><div class="row"><div><label for="unit">Rental unit address</label><input id="unit" type="text" autocomplete="off" /></div></div><pre id="draft" class="draft"></pre><button id="copy-draft" type="button" class="secondary">Copy the courtesy note</button><p id="copy-status" class="hint" aria-live="polite"></p></details>
       </section>
