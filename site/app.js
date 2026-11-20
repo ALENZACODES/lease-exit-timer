@@ -97,7 +97,7 @@ function whyNote(out) {
   const reasons = [];
   if (out.delivery === "mail") reasons.push('Mail counts as given on the fifth day after mailing, s. 191 (3), so notice sent ' + pretty(out.sent) + ' counts on ' + pretty(out.notice) + '.');
   else if (out.delivery === "courier") reasons.push('Courier counts on the day after hand off, or the next day that is not a holiday, LTB rule 3.9, so it counts on ' + pretty(out.notice) + '.');
-  else if (out.delivery === "email") reasons.push('Email with written consent counts as described in LTB rule 3.5, here on ' + pretty(out.notice) + '.');
+  else if (out.delivery === "email") reasons.push('Email with written consent (LTB rule 3.5) counts on the day it is sent (LTB rule 3.9), here on ' + pretty(out.notice) + '. Rule 3.9 sets no time of day, so the Rules of Procedure have no evening cutoff for email.');
   else reasons.push('Notice given by hand counts on the day you give it, ' + pretty(out.notice) + '.');
   reasons.push(out.usedSpecial ? 'Section 44 (5) treats notice by January 1 for the end of February, or by February 1 for the end of March, as at least 60 days.' : (out.kind === "weekly" || out.kind === "daily") ? 'Section 44 (1) needs at least 28 days, and the end date must be the last day of a rental period.' : out.kind === "fixed" ? 'Section 44 (4) needs at least 60 days before the expiry date in the agreement, and the notice takes effect on that date.' : 'Section 44 (2) needs at least 60 days, and the end date must be the last day of a rental period.');
   reasons.push('The earliest end date that meets both is ' + pretty(out.termination) + ', ' + out.daysOfNotice + ' days after notice counts.');
@@ -157,7 +157,7 @@ function render(out) {
     html += '</details>';
     if (out.lateCost) html += lateNote(out);
     if (out.sendDayNote) html += '<p class="note" id="send-day-note">' + out.sendDayNote + '</p>';
-    if (out.delivery === "email") html += '<p class="note">Put your name and phone number in the email, attach the signed Form N9, and keep a copy of the sent email and of the written consent.</p>';
+    if (out.delivery === "email") html += '<p class="note" id="email-note">Put your name and phone number in the email, attach the signed Form N9, and keep a copy of the sent email and of the written consent. LTB rule 3.9 counts an email as served on the day it was sent and sets no time of day cutoff (Rules of Procedure, updated September 21, 2026, read November 20, 2026). Send it early on the last day anyway, and keep the sent email with its date and time.</p>';
     const items = L.n9Checklist(out);
     html += '<div class="n9" id="n9-checklist"><p class="flag">FORM N9 CHECKLIST</p><p class="hint">Every field the tenant or representative must complete on the official form, with your date filled in. The Office Use Only box on page 3 is for the Board. This page does not fill in, sign or send Form N9, and the courtesy note further down is not Form N9.</p><ol>' + items.filter((it) => it.page).map((it) => '<li><span>Page ' + it.page + ': ' + it.field + '</span><strong>' + it.fill + '</strong></li>').join("") + '</ol>' + items.filter((it) => !it.page).map((it) => '<p class="n9-due"><span>' + it.field + '</span> <strong>' + it.fill + '</strong></p>').join("") + '</div>';
     if (out.usedSpecial) html += '<p class="source-note">Section 44 (5) treats notice by January 1 for the end of February, or by February 1 for the end of March, as at least 60 days.</p>';

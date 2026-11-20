@@ -282,7 +282,7 @@
         : "";
       return prettyLong(legal) + " is the theoretical last mailing day: mail on that day would count in time. It is not a day with confirmed postal collection, because " + why + street +
         " The schedule does not promise weekend collection, and post offices run by a private business inside a store follow the store's hours, so mail left there on a weekend or holiday may not move until the next business day. This page therefore advises mailing by " + prettyLong(practical) +
-        ", the last weekday before that which is not on the Canada Post closure list. Ask the counter for a dated receipt. It is evidence of the day you mailed it, not a guarantee of how the Board will count it.";
+        ", the last weekday before that which is not on the Canada Post closure list. Hand it over a post office counter, not into a street box, so the day it was accepted can be shown. Ask the counter for a dated receipt. It is evidence of the day you mailed it, not a guarantee of how the Board will count it. If no counter can accept it by " + prettyLong(practical) + ", do not count on a street box or a later postmark: check the last day to give it by hand in the line that lists every method, or use email if the landlord's written consent covers this notice.";
     }
     if (method === "courier") {
       const sat = addDays(legal, -1);

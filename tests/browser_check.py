@@ -11,12 +11,13 @@ URL = sys.argv[1]
 AXE = sys.argv[2] if len(sys.argv) > 2 else None
 EXPECT = {
     "ordinary": ["Give Form N9 by hand by Wednesday, December 2, 2026 to end your tenancy on January 31, 2027.", "January 31, 2027", "December 2, 2026", "FORM N9 CHECKLIST", "31/01/2027", "Include all tenant names", "Every field the tenant or representative must complete", "Missing the last day by one day moves the end date by 1 month, about $1,850.00 more rent", "not a bill", "Same end date, every method.", "Canada Post November 27, 2026", "February 28, 2027", "Why this date"],
-    "mail": ["Send Form N9 by Canada Post by Thursday, December 24, 2026 to end your tenancy on February 28, 2027.", "Sunday, December 27, 2026 is the theoretical last mailing day for the legal deadline as written in s. 44 (5). It is not a day with confirmed postal collection.", "may not be collected or postmarked until Tuesday, December 29, 2026", "It is evidence of the day you mailed it", "Monday, December 28, 2026 could also work, but only on the author's reading", "Boxing Day", "dated receipt", "Canada Post December 24, 2026 (theoretical mailing limit December 27, 2026; December 28, 2026 on the author's reading only)", "A notice or document may be delivered to a party or person on a holiday", "December 24, 2026", "fifth day after mailing", "Holiday extension of the January 1 deadline", "Time limits that would otherwise expire on a holiday", "January 2, 2027", "January 4, 2027", "does not rely on it, because it is not clear the Board", "minimum periods are not extended"],
+    "mail": ["Send Form N9 by Canada Post by Thursday, December 24, 2026 to end your tenancy on February 28, 2027.", "Sunday, December 27, 2026 is the theoretical last mailing day for the legal deadline as written in s. 44 (5). It is not a day with confirmed postal collection.", "may not be collected or postmarked until Tuesday, December 29, 2026", "It is evidence of the day you mailed it", "Monday, December 28, 2026 could also work, but only on the author's reading", "Boxing Day", "dated receipt", "Canada Post December 24, 2026 (theoretical mailing limit December 27, 2026; December 28, 2026 on the author's reading only)", "A notice or document may be delivered to a party or person on a holiday", "December 24, 2026", "fifth day after mailing", "Holiday extension of the January 1 deadline", "Time limits that would otherwise expire on a holiday", "January 2, 2027", "January 4, 2027", "does not rely on it, because it is not clear the Board", "minimum periods are not extended", "Hand it over a post office counter, not into a street box", "If no counter can accept it by Thursday, December 24, 2026, do not count on a street box or a later postmark"],
     "winter": ["February 28, 2027", "February and March rule", "FORM N9 CHECKLIST", "28/02/2027", "January 2, 2027"],
     "courier": ["Send Form N9 by courier by Friday, January 29, 2027 to end your tenancy on March 31, 2027.", "Sunday, January 31, 2027 is the last day that would still meet the legal deadline", "Saturday, January 30, 2027 would also count on the same day, if your courier picks up on Saturdays", "March 31, 2027", "January 4, 2027", "New Year's Day", "UNKNOWN, counted as closed: Ontario holiday under the Legislation Act, 2006, s. 88", "VERIFIED: Saturday or Sunday, a holiday under LTB rule 1.1 by name", "Board closures are UNKNOWN.", "an earlier end date of February 28, 2027", "about $2,100.00 more rent", "Courier January 29, 2027 (legal limit January 31, 2027)"],
     "late": ["It is too late to end this fixed term on December 31, 2026 by notice.", "TOO LATE FOR THIS FIXED TERM", "January 31, 2027"],
 }
 fails = []
+AXE_RUNS = [0]
 
 async def main():
     async with async_playwright() as p:
@@ -43,6 +44,7 @@ async def main():
                 if AXE:
                     await pg.add_script_tag(path=AXE)
                     v = await pg.evaluate("async()=>(await axe.run(document,{runOnly:['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa','best-practice']})).violations.map(x=>x.id)")
+                    AXE_RUNS[0] += 1
                     if v:
                         fails.append(f"{vw[0]} {name}: axe {v}")
             # Keyboard: first Tab reaches the skip link, and Enter on it moves focus into main.
@@ -64,9 +66,13 @@ async def main():
             await pg.wait_for_timeout(150)
             if "LAST DAY TO SEND" not in await pg.locator("#result").inner_text():
                 fails.append(f"{vw[0]} email with consent did not count")
+            # Round 9: LTB rule 3.9 counts an email on the day it was sent and sets no time of day cutoff.
+            if "sets no time of day cutoff" not in await pg.locator("#result").inner_text():
+                fails.append(f"{vw[0]} email note does not state the rule 3.9 time of day position")
             if AXE:
                 await pg.add_script_tag(path=AXE)
                 v = await pg.evaluate("async()=>(await axe.run(document,{runOnly:['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa','best-practice']})).violations.map(x=>x.id)")
+                AXE_RUNS[0] += 1
                 if v:
                     fails.append(f"{vw[0]} email state: axe {v}")
             # Fixed term with no end date shows a clear error and marks the field.
@@ -119,6 +125,7 @@ async def main():
             if AXE:
                 await pg.add_script_tag(path=AXE)
                 v = await pg.evaluate("async()=>(await axe.run(document,{runOnly:['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa','best-practice']})).violations.map(x=>x.id)")
+                AXE_RUNS[0] += 1
                 if v:
                     fails.append(f"{vw[0]} civic holiday and chain state: axe {v}")
             # Round 8: notice by hand on Saturday, January 2, 2027 leads with the safe literal end date.
@@ -140,6 +147,7 @@ async def main():
             if AXE:
                 await pg.add_script_tag(path=AXE)
                 v = await pg.evaluate("async()=>(await axe.run(document,{runOnly:['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa','best-practice']})).violations.map(x=>x.id)")
+                AXE_RUNS[0] += 1
                 if v:
                     fails.append(f"{vw[0]} January 2 state: axe {v}")
             # No horizontal scroll on small screens.
@@ -155,4 +163,4 @@ asyncio.run(main())
 if fails:
     print("FAIL\n" + "\n".join(fails))
     sys.exit(1)
-print("browser check passed: 5 examples x 2 screen sizes, keyboard, email consent, fixed term entry, civic holiday note, weekly rent, rent check, January 2 safe headline, decision sentence, short live summary, deadline extension, every method line, service chain, layout" + (", axe 0 violations" if AXE else ""))
+print("browser check passed: 5 examples x 2 screen sizes, keyboard, email consent and the rule 3.9 note, mail counter safeguard, fixed term entry, civic holiday note, weekly rent, rent check, January 2 safe headline, decision sentence, short live summary, deadline extension, every method line, service chain, layout" + (f", axe 0 violations in {AXE_RUNS[0]} page states" if AXE else ""))
