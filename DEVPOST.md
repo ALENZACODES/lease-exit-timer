@@ -40,7 +40,7 @@ Plain HTML, CSS and JavaScript. One date engine, `site/dates.js`, is shared by t
 4. **Holidays:** courier timing, the Canada Post holiday calendar, and Board closures marked UNKNOWN and counted as closed.
 5. **v1.7.0, the safe headline:** where a date works only on one reading of the law, the safe date leads. With that rule turned off, 120 headline checks fail.
 6. **v1.8.0 (commit `57c8c51`):** the counter safeguard for mail, and a fresh reading of the Board's rule 3.9, which counts an email on the day it was sent with no time of day cutoff for service under that rule.
-7. **v1.9.0, now:** the holiday list checked again against the official text of the Legislation Act, s. 88 (it was right, and a new test rebuilds it from the statute for 2022 to 2040), the fallback to hand delivery made conditional, the counter receipt kept apart from the legal mailing date, and rule 1.15 no longer relied on.
+7. **v1.9.0 (commit `b4dce4e`), now:** the holiday list checked again against the official text of the Legislation Act, s. 88 (it was right, and a new test rebuilds it from the statute for 2022 to 2040), the fallback to hand delivery made conditional, the counter receipt kept apart from the legal mailing date, and rule 1.15 no longer relied on.
 
 Nine rounds of written rubric review on 19 and 20 November 2026 scored a written brief against the event criteria and listed fixes. The reviewers read the brief only; they did not run the page and they are not renters. `docs/TESTING.md` lists every change and its tests.
 
@@ -54,7 +54,7 @@ https://youtu.be/AasmHYBD09k
 
 The video was recorded at commit `2746fc3`, before every rubric review, and it is kept unchanged. It does not show the later calendar work, the send by day, the Canada Post holidays, the safe headline or the counter safeguard. The live page shows all of them, and so does the GIF, which was captured from v1.9.0.
 
-Erratum: the video's closing card calls 81,816 cases the first brute force run. The first run was 20,454 cases, with 1,650 failures. 81,816 is the number the fixed engine passed once four delivery methods were added.
+Erratum: the video's closing card calls 81,816 cases the first brute force run. The first run was 20,454 cases, with 1,650 failed checks in 850 cases. 81,816 is the number the fixed engine passed once four delivery methods were added.
 
 ## Built with
 

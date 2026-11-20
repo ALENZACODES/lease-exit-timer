@@ -16,7 +16,7 @@ Lease Exit Timer started on 9 November 2026 as a small date counter with 27 hand
 | 19 November 2026, evening | `3f7c9e7` | Changes after the sixth round of rubric review (section 11), version 1.6.0. |
 | 19 November 2026, night | `9c325fd` | Changes after the seventh round of rubric review (section 12), version 1.7.0. |
 | 20 November 2026, early morning | `ab93819`, then `57c8c51` | Changes after the eighth round of rubric review (section 13), version 1.8.0. `57c8c51` only names the test count history by version. |
-| 20 November 2026, early morning | v1.9.0 | Changes after the ninth round of rubric review (section 14). This is the commit that adds this row. |
+| 20 November 2026, early morning | `b4dce4e` | Changes after the ninth round of rubric review (section 14), version 1.9.0. The commit that adds this hash only words the video erratum as 1,650 failed checks in 850 cases. |
 
 **What a rubric review is.** Each review round was a written critique of a project brief I wrote: the code excerpts, the test results and the draft entry text. Each critique scored the entry against the event's four published criteria and ranked a list of fixes. The reviewers worked from the brief only. They did not run the page, the tests or the video, and they did not take part as renters. Rounds one to seven ran on 19 November 2026 and rounds eight and nine in the early hours of 20 November 2026, so they are document reviews done within about a day, not user testing.
 
@@ -33,7 +33,7 @@ Run against the first version, which only knew hand delivery, it covered 20,454 
 
 After the fix the engine passed all 81,816 cases (the same 20,454 cases for each of four delivery methods), and the 27 original checks still passed. Section 7 describes the independent version that replaced this check.
 
-**Erratum for the video.** The walkthrough video (https://youtu.be/AasmHYBD09k, recorded at `2746fc3`) is kept as it is and was not re-recorded. Its closing card calls 81,816 cases the first brute force run. That is wrong. The first run covered 20,454 cases and reported 1,650 failures. 81,816 is the number of cases the fixed engine passed once delivery methods were added. The README and the Devpost draft carry the same correction.
+**Erratum for the video.** The walkthrough video (https://youtu.be/AasmHYBD09k, recorded at `2746fc3`) is kept as it is and was not re-recorded. Its closing card calls 81,816 cases the first brute force run. That is wrong. The first run covered 20,454 cases and reported 1,650 failed checks in 850 cases. 81,816 is the number of cases the fixed engine passed once delivery methods were added. The README and the Devpost draft carry the same correction.
 
 ## 2. Reading the delivery rule changed the main answer
 

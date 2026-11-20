@@ -12,7 +12,7 @@ The answer comes first, as one sentence you can act on, for example: "Send Form 
 
 ![A silent 36 second capture of v1.9.0, the current build, made by automated browser capture on November 20, 2026: a generic 60 day count from Saturday, November 28, 2026 against this page; Form N9 by Canada Post on November 28, where the page says send by Thursday, December 24, 2026 to end on February 28, 2027, and calls Sunday, December 27 only the theoretical last mailing day, with the advice to hand it over a post office counter and keep the dated receipt, and the other ways, each only if it fits; the same end date by every method; then notice by hand on Saturday, January 2, 2027, where the headline is the safe end date, March 31, 2027, February 28 is marked "Contingent, not advised", and the Form N9 checklist says 31/03/2027.](docs/screenshots/10-current-build.gif)
 
-**Video and erratum.** The walkthrough video (https://youtu.be/AasmHYBD09k) was recorded at commit `2746fc3`, before any rubric review, and it is kept as it is. Its closing card says the first brute force run covered 81,816 cases. That is wrong: the first run covered 20,454 cases and found 1,650 failures. 81,816 is the total after the fix, when the same 20,454 cases were run for each of four delivery methods ([docs/TESTING.md](docs/TESTING.md), section 1). It does not show anything changed after that commit. The GIF above and the screenshots in docs/screenshots (except the before and after image and the thumbnail) were captured from v1.9.0, the current build, so they show the theoretical last mailing day wording and the January 2 safe headline described above.
+**Video and erratum.** The walkthrough video (https://youtu.be/AasmHYBD09k) was recorded at commit `2746fc3`, before any rubric review, and it is kept as it is. Its closing card says the first brute force run covered 81,816 cases. That is wrong: the first run covered 20,454 cases and found 1,650 failed checks in 850 cases. 81,816 is the total after the fix, when the same 20,454 cases were run for each of four delivery methods ([docs/TESTING.md](docs/TESTING.md), section 1). It does not show anything changed after that commit. The GIF above and the screenshots in docs/screenshots (except the before and after image and the thumbnail) were captured from v1.9.0, the current build, so they show the theoretical last mailing day wording and the January 2 safe headline described above.
 
 ![The same input before and after. Generic 60 day count from Saturday, November 28, 2026: January 27, 2027, so January 31 looks fine. This page: mail counts on December 3, so the earliest end is February 28, 2027](docs/screenshots/00-before-after.png)
 
@@ -52,7 +52,7 @@ Open http://localhost:8080/. There is no build step.
 npm test
 ```
 
-Versions: v1.8.0 is commit `ab93819` (with `57c8c51` naming the test count history), v1.7.0 is `9c325fd`. v1.9.0 is the commit that adds this line; [docs/TESTING.md](docs/TESTING.md) has the full timeline.
+Versions: v1.9.0 is commit `b4dce4e` (the commit that adds this line only words the video erratum as failed checks in cases), v1.8.0 is `ab93819` (with `57c8c51` naming the test count history), v1.7.0 is `9c325fd`; [docs/TESTING.md](docs/TESTING.md) has the full timeline.
 
 - `tests/test_dates.mjs` has the 27 original worked examples, plus one more from round 8 (28 checks).
 - `tests/test_delivery.mjs` has 31 checks for mail, courier, email, rent days 29 to 31, late fixed terms, bad input and the calendar file.
